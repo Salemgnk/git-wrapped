@@ -78,6 +78,20 @@ class AnalyzeTest(unittest.TestCase):
         self.assertEqual(langs[".py"], 2)
         self.assertEqual(langs[".js"], 1)
 
+    def test_projects_languages_exclude_dotfiles(self) -> None:
+        commits = [
+            commit(dt(2026, 1, 1), files=[
+                "app.py", "src/main.js", ".gitignore", "src/.env", "Makefile",
+            ]),
+        ]
+        proj = analyze(commits, 2026)["projects"]
+        exts = {l["ext"] for l in proj["languages"]}
+        self.assertIn(".py", exts)
+        self.assertIn(".js", exts)
+        self.assertNotIn(".gitignore", exts)
+        self.assertNotIn(".env", exts)
+        self.assertFalse(any(e.startswith(".") and e[1:] in {"gitignore", "env"} for e in exts))
+
     def test_words_top_and_fix_rate(self) -> None:
         commits = [
             commit(dt(2026, 1, 1), subject="fix login bug"),
@@ -89,6 +103,15 @@ class AnalyzeTest(unittest.TestCase):
         self.assertEqual(top["bug"], 2)
         self.assertEqual(words["fix_rate_pct"], 67)  # 2/3 arrondi
         self.assertNotIn("the", top)  # stop-word filtré si présent
+
+    def test_words_split_on_symbol_range(self) -> None:
+        commits = [commit(dt(2026, 1, 1), subject="more÷text bug")]
+        words = analyze(commits, 2026)["words"]
+        top = {w["word"] for w in words["top_words"]}
+        self.assertIn("more", top)
+        self.assertIn("text", top)
+        self.assertIn("bug", top)
+        self.assertNotIn("more÷text", top)
 
 
 if __name__ == "__main__":

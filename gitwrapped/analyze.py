@@ -13,7 +13,7 @@ _STOP_WORDS = {
     "le", "la", "les", "un", "une", "de", "des", "du", "et", "à", "en",
     "pour", "dans", "sur", "au", "aux", "ce", "cette", "is", "it", "this",
 }
-_WORD_RE = re.compile(r"[a-zA-Zà-ÿ]{2,}")
+_WORD_RE = re.compile(r"[^\W\d_]{2,}")
 _EMOJI_RE = re.compile(
     "[\U0001F300-\U0001FAFF\U00002600-\U000027BF\U0001F000-\U0001F0FF]"
 )
@@ -93,10 +93,10 @@ def _projects(commits: list[Commit]) -> dict:
     for c in commits:
         for path in c.files:
             file_counts[path] += 1
-            dot = path.rfind(".")
-            slash = path.rfind("/")
-            if dot > slash and dot != -1:
-                lang_counts[path[dot:].lower()] += 1
+            name = path.rsplit("/", 1)[-1]
+            dot = name.rfind(".")
+            if dot > 0:  # dot exists and is not the leading char -> real extension
+                lang_counts[name[dot:].lower()] += 1
     top_file = None
     if file_counts:
         path, count = file_counts.most_common(1)[0]
