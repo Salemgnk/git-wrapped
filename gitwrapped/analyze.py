@@ -17,21 +17,99 @@ _WORD_RE = re.compile(r"[^\W\d_]{2,}")
 _EMOJI_RE = re.compile(
     "[\U0001F300-\U0001FAFF\U00002600-\U000027BF\U0001F000-\U0001F0FF]"
 )
+_MONTHS = ["Jan", "Fév", "Mar", "Avr", "Mai", "Juin",
+           "Juil", "Août", "Sep", "Oct", "Nov", "Déc"]
 
 
 def analyze(commits: list[Commit], year: int) -> dict:
     """Renvoie un dict de stats sérialisable à partir des commits de l'année."""
     if not commits:
         return {"year": year, "total_commits": 0, "empty": True,
-                "volume": {}, "rhythm": {}, "projects": {}, "words": {}}
+                "volume": {}, "rhythm": {}, "projects": {}, "words": {},
+                "contributions": _contributions([], year), "archetype": {}}
+    volume = _volume(commits)
+    rhythm = _rhythm(commits)
+    projects = _projects(commits)
+    words = _words(commits)
     return {
         "year": year,
         "total_commits": len(commits),
         "empty": False,
-        "volume": _volume(commits),
-        "rhythm": _rhythm(commits),
-        "projects": _projects(commits),
-        "words": _words(commits),
+        "volume": volume,
+        "rhythm": rhythm,
+        "projects": projects,
+        "words": words,
+        "contributions": _contributions(commits, year),
+        "archetype": _archetype(volume, rhythm, projects, words),
+    }
+
+
+def _archetype(volume: dict, rhythm: dict, projects: dict, words: dict) -> dict:
+    """Déduit une 'personnalité de dev' à partir des stats (déterministe)."""
+    night = rhythm["night_owl_pct"]
+    fix = words["fix_rate_pct"]
+    if night >= 40:
+        when = "Night Owl"
+    elif rhythm["peak_hour"] <= 11:
+        when = "Lève-tôt"
+    else:
+        when = "Diurne"
+
+    top_words = {w["word"] for w in words["top_words"][:5]}
+    if fix >= 35:
+        craft, tagline = "Pompier", "tu éteins plus de feux que tu n'en allumes"
+    elif "refactor" in top_words:
+        craft, tagline = "Refactoreur", "jamais tranquille tant que ce n'est pas propre"
+    elif volume["deleted"] > volume["added"]:
+        craft, tagline = "Sculpteur", "tu tailles dans la masse — moins, c'est mieux"
+    else:
+        craft, tagline = "Bâtisseur", "brique par brique, tu empiles les lignes"
+
+    lang = projects["languages"][0]["ext"] if projects["languages"] else None
+    traits = [f"{night}% la nuit", f"fix {fix}%"]
+    if lang:
+        traits.append(lang)
+    return {"title": f"{when} {craft}", "tagline": tagline, "traits": traits}
+
+
+def _contributions(commits: list[Commit], year: int) -> dict:
+    """Grille de contributions type GitHub : colonnes = semaines (début dimanche),
+    lignes = jours (0=dimanche). Les jours hors année valent None."""
+    counts: Counter[date] = Counter(
+        c.when.date() for c in commits if c.when.year == year
+    )
+    jan1 = date(year, 1, 1)
+    dec31 = date(year, 12, 31)
+    # Dimanche <= 1er janvier ; samedi >= 31 décembre. weekday(): lun=0..dim=6.
+    start = jan1 - timedelta(days=(jan1.weekday() + 1) % 7)
+    end = dec31 + timedelta(days=(6 - (dec31.weekday() + 1) % 7))
+
+    weeks: list[list[dict | None]] = []
+    day = start
+    while day <= end:
+        week: list[dict | None] = []
+        for _ in range(7):
+            if day.year == year:
+                week.append({"date": day.isoformat(), "count": counts.get(day, 0)})
+            else:
+                week.append(None)
+            day += timedelta(days=1)
+        weeks.append(week)
+
+    month_labels: list[dict] = []
+    prev_month = None
+    for col, week in enumerate(weeks):
+        first = next((cell for cell in week if cell is not None), None)
+        if first is not None:
+            month = int(first["date"][5:7])
+            if month != prev_month:
+                month_labels.append({"col": col, "label": _MONTHS[month - 1]})
+                prev_month = month
+
+    return {
+        "weeks": weeks,
+        "max": max(counts.values(), default=0),
+        "month_labels": month_labels,
     }
 
 
@@ -103,6 +181,7 @@ def _projects(commits: list[Commit]) -> dict:
         top_file = {"path": path, "count": count}
     return {
         "top_repos": [{"name": n, "count": c} for n, c in repo_counts.most_common(5)],
+        "repo_count": len(repo_counts),
         "top_file": top_file,
         "languages": [{"ext": e, "count": c} for e, c in lang_counts.most_common(6)],
     }

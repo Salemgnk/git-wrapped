@@ -113,6 +113,60 @@ class AnalyzeTest(unittest.TestCase):
         self.assertIn("bug", top)
         self.assertNotIn("more÷text", top)
 
+    def test_projects_repo_count(self) -> None:
+        commits = [
+            commit(dt(2026, 1, 1), repo="alpha"),
+            commit(dt(2026, 1, 2), repo="beta"),
+            commit(dt(2026, 1, 3), repo="beta"),
+        ]
+        self.assertEqual(analyze(commits, 2026)["projects"]["repo_count"], 2)
+
+
+class ArchetypeTest(unittest.TestCase):
+    def test_night_owl_pompier(self) -> None:
+        commits = [commit(datetime(2026, 1, 1, 3).astimezone(), subject="fix " + str(i))
+                   for i in range(5)]
+        arch = analyze(commits, 2026)["archetype"]
+        self.assertEqual(arch["title"], "Night Owl Pompier")
+        self.assertTrue(arch["tagline"])
+        self.assertIn("100% la nuit", arch["traits"])
+
+    def test_builder_when_more_added_than_deleted(self) -> None:
+        commits = [commit(dt(2026, 1, 1, 14), subject="add feature", added=50, deleted=1)]
+        arch = analyze(commits, 2026)["archetype"]
+        self.assertIn("Bâtisseur", arch["title"])
+
+    def test_empty_year_has_no_archetype(self) -> None:
+        self.assertEqual(analyze([], 2026)["archetype"], {})
+
+
+class ContributionsTest(unittest.TestCase):
+    def test_grid_is_weeks_of_seven_days(self) -> None:
+        contrib = analyze([commit(dt(2026, 6, 15))], 2026)["contributions"]
+        self.assertTrue(all(len(week) == 7 for week in contrib["weeks"]))
+        # 2026 spans 53 grid columns (Sunday-aligned).
+        self.assertEqual(len(contrib["weeks"]), 53)
+
+    def test_counts_land_on_the_right_day(self) -> None:
+        commits = [commit(dt(2026, 6, 15)), commit(dt(2026, 6, 15))]
+        contrib = analyze(commits, 2026)["contributions"]
+        cells = [c for week in contrib["weeks"] for c in week if c is not None]
+        target = next(c for c in cells if c["date"] == "2026-06-15")
+        self.assertEqual(target["count"], 2)
+        self.assertEqual(contrib["max"], 2)
+
+    def test_days_outside_year_are_none(self) -> None:
+        contrib = analyze([commit(dt(2026, 6, 15))], 2026)["contributions"]
+        dates = [c["date"] for week in contrib["weeks"] for c in week if c is not None]
+        self.assertTrue(all(d.startswith("2026-") for d in dates))
+        # Grid starts before Jan 1, so the first column holds padding None cells.
+        self.assertIsNone(contrib["weeks"][0][0])
+
+    def test_empty_year_still_has_grid(self) -> None:
+        contrib = analyze([], 2026)["contributions"]
+        self.assertEqual(contrib["max"], 0)
+        self.assertTrue(all(len(week) == 7 for week in contrib["weeks"]))
+
 
 if __name__ == "__main__":
     unittest.main()
