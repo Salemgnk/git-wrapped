@@ -56,11 +56,18 @@ def parse_git_log(output: str, repo_name: str) -> list[Commit]:
 
 
 def collect_commits(repo: Path, year: int, author: str | None) -> list[Commit]:
-    """Renvoie les commits de `repo` sur `year`, filtrés par `author` (email)."""
+    """Renvoie les commits de `repo` sur `year` (date AUTEUR), filtrés par `author` (email).
+
+    Le filtre `--since`/`--until` de git s'applique à la date de committer, pas
+    à la date d'auteur (`%aI`, utilisée pour `Commit.when`). On élargit donc la
+    fenêtre d'un an de chaque côté pour absorber le décalage auteur/committer
+    (rebase, cherry-pick, amend), puis on filtre précisément après coup sur
+    `c.when.year`.
+    """
     cmd = [
         "git", "-C", str(repo), "log",
-        f"--since={year}-01-01T00:00:00",
-        f"--until={year + 1}-01-01T00:00:00",
+        f"--since={year - 1}-01-01T00:00:00",
+        f"--until={year + 2}-01-01T00:00:00",
         "--numstat", f"--pretty={_FORMAT}",
     ]
     if author:
@@ -69,7 +76,8 @@ def collect_commits(repo: Path, year: int, author: str | None) -> list[Commit]:
         result = subprocess.run(cmd, capture_output=True, text=True, check=True)
     except (subprocess.CalledProcessError, FileNotFoundError):
         return []
-    return parse_git_log(result.stdout, repo.name)
+    commits = parse_git_log(result.stdout, repo.name)
+    return [c for c in commits if c.when.year == year]
 
 
 def default_author() -> str | None:

@@ -87,6 +87,25 @@ class CollectCommitsTest(unittest.TestCase):
     def test_filters_by_author(self) -> None:
         self.assertEqual(collect_commits(self.repo, 2026, "other@nope.com"), [])
 
+    def test_filters_by_author_date_not_committer_date(self) -> None:
+        (self.repo / "g.txt").write_text("second\n")
+        self._git("add", "g.txt")
+        self._git(
+            "commit", "-q", "-m", "rebased commit",
+            env={
+                "GIT_AUTHOR_DATE": "2026-11-20T09:00:00",
+                "GIT_COMMITTER_DATE": "2027-01-05T09:00:00",
+            },
+        )
+
+        commits_2026 = collect_commits(self.repo, 2026, "me@example.com")
+        subjects_2026 = [c.subject for c in commits_2026]
+        self.assertIn("rebased commit", subjects_2026)
+
+        commits_2027 = collect_commits(self.repo, 2027, "me@example.com")
+        subjects_2027 = [c.subject for c in commits_2027]
+        self.assertNotIn("rebased commit", subjects_2027)
+
 
 if __name__ == "__main__":
     unittest.main()
