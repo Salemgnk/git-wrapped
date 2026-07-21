@@ -60,6 +60,15 @@ class RenderTest(unittest.TestCase):
         html = self.out.read_text(encoding="utf-8")
         self.assertNotIn("<script>alert(1)</script>", html)
 
+    def test_renders_emoji_card(self) -> None:
+        stats = self._stats()
+        stats["words"]["emojis"] = [{"emoji": "🔥", "count": 3}]
+        render(stats, self.out)
+        html = self.out.read_text(encoding="utf-8")
+        self.assertIn("Tes emojis", html)
+        # Pas de crash quand la liste d'emojis est vide (cas par defaut).
+        render(self._stats(), self.out)
+
 
 if __name__ == "__main__":
     unittest.main()

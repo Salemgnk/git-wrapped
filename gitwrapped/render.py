@@ -96,6 +96,8 @@ if (S.empty) {
 
   if (S.words.top_words.length)
     list("Tes mots", S.words.top_words.map(w => w.word + "  ·  " + w.count));
+  if (S.words.emojis.length)
+    list("Tes emojis", S.words.emojis.map(e => e.emoji + "  ·  " + e.count));
   metric("Taux de \\"fix\\"", S.words.fix_rate_pct + "%",
     "message le plus long : " + S.words.longest_subject);
 }
