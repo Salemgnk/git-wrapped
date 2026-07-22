@@ -1,0 +1,11 @@
+{
+  "functions": { "api/wrapped.js": { "runtime": "nodejs20.x" } },
+  "rewrites": [
+    { "source": "/", "destination": "/web/index.html" },
+    { "source": "/wrapped.js", "destination": "/web/wrapped.js" },
+    { "source": "/wrapped.css", "destination": "/web/wrapped.css" },
+    { "source": "/fonts.css", "destination": "/web/fonts.css" },
+    { "source": "/fonts/:f", "destination": "/web/fonts/:f" }
+  ],
+  "cleanUrls": true
+}

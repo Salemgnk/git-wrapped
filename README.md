@@ -20,8 +20,25 @@ python git_wrapped.py ~/Documents/Perso ~/code \
 
 Ouvre ensuite le `.html` dans un navigateur et fais défiler.
 
+## App web (pseudo GitHub)
+
+En plus du CLI local, une app web affiche le wrapped des **dépôts publics**
+d'un pseudo GitHub. La story (CSS/JS) est partagée avec le CLI ; seule la
+source de données change (API GitHub GraphQL via un backend).
+
+Déploiement Vercel :
+1. Importer le repo dans Vercel.
+2. Variable d'environnement **`GITHUB_TOKEN`** = un token GitHub en lecture
+   seule (scope `read:user` / `public_repo` suffit ; sert à lire des données
+   publiques via GraphQL).
+3. Déployer. L'accueil sert `web/index.html` ; l'API est
+   `GET /api/wrapped?user=<login>&year=<YYYY>` (année défaut = année courante).
+
+Le CLI local reste disponible (voir *Utilisation* ci-dessus).
+
 ## Tests
 
 ```bash
-python -m unittest discover -s tests -v
+python -m unittest discover -s tests -v   # CLI (Python)
+npm test                                   # backend web (Node, node:test)
 ```

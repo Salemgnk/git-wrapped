@@ -1,5 +1,5 @@
-import { fetchWrapped } from "./github-client.js";
-import { githubToStats } from "./github-to-stats.js";
+import { fetchWrapped } from "../lib/github-client.js";
+import { githubToStats } from "../lib/github-to-stats.js";
 
 const USER_RE = /^[a-zA-Z0-9-]{1,39}$/;
 

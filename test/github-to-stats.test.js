@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { githubToStats } from "./github-to-stats.js";
+import { githubToStats } from "../lib/github-to-stats.js";
 
 function cal(year, entries) {
   // entries: {"YYYY-MM-DD": count}. On remplit une année de zéros puis on applique.
