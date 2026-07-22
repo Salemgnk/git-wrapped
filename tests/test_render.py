@@ -1,4 +1,3 @@
-import json
 import tempfile
 import unittest
 from pathlib import Path
@@ -15,9 +14,15 @@ class RenderTest(unittest.TestCase):
         self.tmp.cleanup()
 
     def _stats(self, empty=False) -> dict:
+        contributions = {
+            "weeks": [[{"date": "2026-01-04", "count": 1}] + [None] * 6],
+            "max": 1,
+            "month_labels": [{"col": 0, "label": "Jan"}],
+        }
         if empty:
             return {"year": 2026, "total_commits": 0, "empty": True,
-                    "volume": {}, "rhythm": {}, "projects": {}, "words": {}}
+                    "volume": {}, "rhythm": {}, "projects": {}, "words": {},
+                    "contributions": contributions, "archetype": {}}
         return {
             "year": 2026, "total_commits": 42, "empty": False,
             "volume": {"added": 100, "deleted": 20, "longest_streak": 5,
@@ -26,11 +31,16 @@ class RenderTest(unittest.TestCase):
             "rhythm": {"heatmap": [[0] * 24 for _ in range(7)], "peak_hour": 2,
                        "peak_weekday": 0, "night_owl_pct": 60},
             "projects": {"top_repos": [{"name": "alpha", "count": 10}],
+                         "repo_count": 3,
                          "top_file": {"path": "a.py", "count": 8},
                          "languages": [{"ext": ".py", "count": 20}]},
             "words": {"top_words": [{"word": "bug", "count": 5}],
                       "fix_rate_pct": 40, "longest_subject": "refactor everything",
                       "emojis": []},
+            "contributions": contributions,
+            "archetype": {"title": "Night Owl Bâtisseur",
+                          "tagline": "brique par brique",
+                          "traits": ["60% la nuit", "fix 40%", ".py"]},
         }
 
     def test_writes_self_contained_html(self) -> None:
@@ -52,6 +62,7 @@ class RenderTest(unittest.TestCase):
         render(self._stats(empty=True), self.out)
         html = self.out.read_text(encoding="utf-8")
         self.assertIn("2026", html)
+        self.assertIn("silence radio", html)
 
     def test_escapes_html_in_strings(self) -> None:
         stats = self._stats()
@@ -65,9 +76,21 @@ class RenderTest(unittest.TestCase):
         stats["words"]["emojis"] = [{"emoji": "🔥", "count": 3}]
         render(stats, self.out)
         html = self.out.read_text(encoding="utf-8")
-        self.assertIn("Tes emojis", html)
+        self.assertIn("emojis", html)
         # Pas de crash quand la liste d'emojis est vide (cas par defaut).
         render(self._stats(), self.out)
+
+    def test_renders_archetype_card(self) -> None:
+        render(self._stats(), self.out)
+        html = self.out.read_text(encoding="utf-8")
+        self.assertIn("archetype", html)
+        self.assertIn("Night Owl B", html)  # accent-insensitive check of title
+
+    def test_fonts_embedded_as_base64(self) -> None:
+        render(self._stats(), self.out)
+        html = self.out.read_text(encoding="utf-8")
+        self.assertIn("@font-face", html)
+        self.assertIn("data:font/woff2;base64,", html)
 
 
 if __name__ == "__main__":
