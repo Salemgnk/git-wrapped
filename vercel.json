@@ -1,5 +1,5 @@
 {
-  "functions": { "api/wrapped.js": { "runtime": "nodejs20.x" } },
+  "functions": { "api/wrapped.js": { "runtime": "nodejs22.x" } },
   "rewrites": [
     { "source": "/", "destination": "/web/index.html" },
     { "source": "/wrapped.js", "destination": "/web/wrapped.js" },
