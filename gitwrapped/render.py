@@ -235,6 +235,7 @@ const S = JSON.parse(document.getElementById("data").textContent);
 const deck = document.getElementById("deck");
 const ACCENTS = ["#D6FF3D","#FF5CA8","#4DE1FF","#FF7A3C","#9B7CFF","#4CE6A0"];
 const DAYS = ["lundi","mardi","mercredi","jeudi","vendredi","samedi","dimanche"];
+const PARTIAL = S.year === new Date().getFullYear();
 const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
 const fmt = n => (n == null ? "0" : n.toLocaleString("fr-FR"));
 
@@ -350,7 +351,8 @@ function recapSVG() {
     s += svgT(PX + pw - pPad, y, ink, 42, "700", v, false, 0, "end");
     y += rowH;
   });
-  s += svgT(PX, pTop + pH + 116, acc, 50, "800", "C'EST TON WRAP " + S.year, true, 4);
+  s += svgT(PX, pTop + pH + 116, acc, 50, "800",
+    (PARTIAL ? "WRAP " + S.year + " · JUSQU'ICI" : "C'EST TON WRAP " + S.year), true, 4);
   s += svgT(PX, 1858, "#6b6b73", 26, "500", "genere par git-wrapped", true, 4);
   return '<svg xmlns="http://www.w3.org/2000/svg" width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '">'
     + '<defs><style>' + fontFaceCSS() + '</style></defs>' + s + '</svg>';
@@ -389,9 +391,15 @@ function slideIntro() {
   block.appendChild(y);
   c.appendChild(block);
   const t = el("div", "title");
-  t.appendChild(document.createTextNode("Récap de tes "));
-  t.appendChild(el("em", null, "commits"));
-  t.appendChild(document.createTextNode("."));
+  if (PARTIAL) {
+    t.appendChild(document.createTextNode("Tes "));
+    t.appendChild(el("em", null, "commits"));
+    t.appendChild(document.createTextNode(", jusqu'ici."));
+  } else {
+    t.appendChild(document.createTextNode("Récap de tes "));
+    t.appendChild(el("em", null, "commits"));
+    t.appendChild(document.createTextNode("."));
+  }
   c.appendChild(t);
   if (S.empty) {
     c.appendChild(el("div", "joke", "silence radio — aucun commit en " + S.year + "."));
@@ -729,7 +737,8 @@ function slideRecap() {
     row.appendChild(el("span", "k", k)); row.appendChild(el("span", "v", val));
     r.appendChild(row); });
   c.appendChild(r);
-  c.appendChild(el("div", "unit", "c'est ton wrap " + S.year));
+  c.appendChild(el("div", "unit",
+    PARTIAL ? "ton wrap " + S.year + " · jusqu'ici" : "c'est ton wrap " + S.year));
   const btn = el("button", "dl", "Partager ma carte");
   btn.addEventListener("click", e => { e.stopPropagation(); shareRecap(); });
   c.appendChild(btn);
