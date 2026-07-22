@@ -2,5 +2,5 @@
   "name": "git-wrapped-web",
   "private": true,
   "type": "module",
-  "scripts": { "test": "node --test api/" }
+  "scripts": { "test": "node --test api/*.test.js" }
 }
