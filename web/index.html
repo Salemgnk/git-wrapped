@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Git Wrapped</title>
+<link rel="stylesheet" href="./fonts.css">
+<link rel="stylesheet" href="./wrapped.css">
+<style>
+  body { margin:0; background:#050506; color:#F4F3EE; font-family:'Grotesk',system-ui,sans-serif;
+    min-height:100dvh; display:flex; align-items:center; justify-content:center; }
+  .landing { text-align:center; padding:24px; }
+  .landing h1 { font-family:'Mono',monospace; font-size:clamp(28px,6vw,52px); font-weight:700;
+    letter-spacing:-.03em; }
+  .landing .sub { color:#8b8b85; margin:8px 0 28px; font-family:'Mono',monospace; }
+  .landing form { display:flex; gap:10px; justify-content:center; flex-wrap:wrap; }
+  .landing input { background:#141417; border:2px solid #2A2A31; color:#F4F3EE; font-size:18px;
+    padding:14px 16px; font-family:'Mono',monospace; min-width:min(280px,72vw); }
+  .landing button { background:#D6FF3D; color:#0C0C0E; border:none; font-weight:800; font-size:18px;
+    padding:14px 22px; cursor:pointer; }
+  .landing .err { color:#F0616D; margin-top:14px; min-height:1.4em; font-family:'Mono',monospace; }
+  #app:empty { display:none; }
+</style>
+</head>
+<body>
+<div class="landing" id="landing">
+  <h1>git wrapped</h1>
+  <div class="sub">// ton année en code, en un pseudo GitHub</div>
+  <form id="f"><input id="u" placeholder="pseudo GitHub" autocomplete="off"
+    pattern="[A-Za-z0-9-]{1,39}" required>
+    <button type="submit">voir mon wrapped</button></form>
+  <div class="err" id="err"></div>
+</div>
+<div id="app"></div>
+<script src="./wrapped.js"></script>
+<script>
+const f = document.getElementById("f"), errEl = document.getElementById("err"),
+  landing = document.getElementById("landing"), app = document.getElementById("app");
+f.addEventListener("submit", async e => {
+  e.preventDefault();
+  const user = document.getElementById("u").value.trim();
+  errEl.textContent = "chargement…";
+  try {
+    const r = await fetch("/api/wrapped?user=" + encodeURIComponent(user));
+    if (r.status === 404) { errEl.textContent = "pseudo introuvable."; return; }
+    if (!r.ok) { errEl.textContent = "réessaie plus tard."; return; }
+    const stats = await r.json();
+    landing.style.display = "none";
+    renderWrapped(app, stats);
+  } catch (_) { errEl.textContent = "réessaie plus tard."; }
+});
+</script>
+</body>
+</html>
