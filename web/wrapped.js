@@ -407,6 +407,10 @@ function shuffle(a) {
 function repoOptions(correct) {
   const opts = S.projects.top_repos.map(r => r.name).slice(0, 4);
   if (!opts.includes(correct)) opts[0] = correct;
+  for (const p of ["portfolio","dotfiles","api","website","scripts","playground","app","config"]) {
+    if (opts.length >= 4) break;
+    if (!opts.includes(p)) opts.push(p);
+  }
   return shuffle(opts);
 }
 function wordOptions(correct) {
