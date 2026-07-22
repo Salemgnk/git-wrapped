@@ -335,7 +335,7 @@ test("top repos and language aggregation by name", () => {
   assert.equal(s.projects.repo_count, 2);
   const langs = Object.fromEntries(s.projects.languages.map(l => [l.ext, l.count]));
   assert.equal(langs[".ts"], 100);   // langages restent au format ext ; l'agrégation par NOM se fait au rendu
-  assert.ok(!(".map" in langs) === false || true); // .map non filtré ici (filtré côté rendu)
+  assert.equal(langs[".map"], 999);  // githubToStats ne filtre pas ; le filtrage .map se fait côté rendu
 });
 ```
 
