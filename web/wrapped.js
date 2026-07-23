@@ -721,6 +721,11 @@ function slideRecap() {
   const btn = el("button", "dl", "Partager ma carte");
   btn.addEventListener("click", e => { e.stopPropagation(); shareRecap(); });
   c.appendChild(btn);
+  const star = el("a", "star", "★ ça t'a plu ? mets une étoile ↗");
+  star.href = "https://github.com/Salemgnk/git-wrapped";
+  star.target = "_blank"; star.rel = "noopener";
+  star.addEventListener("click", e => e.stopPropagation());
+  c.appendChild(star);
   return c;
 }
 

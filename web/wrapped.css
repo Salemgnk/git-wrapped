@@ -93,6 +93,10 @@ body { background: #050506; color: var(--ink); font-family: var(--sans);
   font-family: var(--sans); font-weight: 800; font-size: 2.7cqh; letter-spacing: .01em;
   padding: 1.3cqh 4.5cqw; cursor: pointer; }
 .dl:active { transform: translate(2px, 2px); box-shadow: 3px 3px 0 var(--acc); }
+.star { align-self: flex-start; margin-top: 1.4cqh; font-family: var(--mono); font-weight: 700;
+  font-size: 1.95cqh; letter-spacing: .03em; color: var(--acc); text-decoration: none;
+  border-bottom: 1.5px solid transparent; padding-bottom: .2cqh; }
+.star:hover { border-bottom-color: var(--acc); }
 
 /* ---- quizz ---- */
 .qq { font-family: var(--sans); font-weight: 700; font-size: 4.2cqh; line-height: 1.12;

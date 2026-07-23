@@ -37,6 +37,8 @@
     font-weight:700; letter-spacing:.08em; text-transform:uppercase; }
   .topbar { border-bottom:2px solid var(--line); }
   .botbar { border-top:2px solid var(--line); color:var(--dim); flex-wrap:wrap; }
+  .botstar { color:var(--acc); text-decoration:none; }
+  .botstar:hover { text-decoration:underline; }
   .brand { color:var(--ink); } .brand .dot { color:var(--acc); }
   .repo { display:inline-flex; align-items:center; gap:9px; text-decoration:none; color:var(--ink);
     border:2px solid var(--line); box-shadow:4px 4px 0 var(--line); padding:9px 15px;
@@ -175,7 +177,7 @@
 
   <footer class="botbar">
     <span>// spotify wrapped, mais pour ton git</span>
-    <span>CLI Python · app web · zéro dépendance</span>
+    <a class="botstar" href="https://github.com/Salemgnk/git-wrapped" target="_blank" rel="noopener">★ ça t'a plu ? star le repo ↗</a>
   </footer>
 </div>
 <div class="loading" id="loading">
