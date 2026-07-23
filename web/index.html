@@ -195,6 +195,10 @@ f.addEventListener("submit", async e => {
     if (!r.ok) { loading.classList.remove("on"); errEl.textContent = "réessaie plus tard."; return; }
     const stats = await r.json();
     loading.classList.remove("on");
+    if (stats.empty) {
+      errEl.textContent = "@" + user + " n'a aucun commit public en " + stats.year + ".";
+      return;
+    }
     landing.style.display = "none";
     renderWrapped(app, stats, backHome);
   } catch (_) { await settle(); loading.classList.remove("on"); errEl.textContent = "réessaie plus tard."; }
