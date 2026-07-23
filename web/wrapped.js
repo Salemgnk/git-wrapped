@@ -89,7 +89,7 @@ function svgT(x, y, fill, size, weight, content, mono, ls, anchor) {
     + (ls ? ' letter-spacing="' + ls + '"' : "") + ' font-family="' + fam + '">'
     + esc(content) + '</text>';
 }
-function recapSVG() {
+function recapSVG(fontCSS) {
   const W = 1080, H = 1920, acc = "#FF7A3C", ink = "#F4F3EE", dim = "#8b8b85",
     line = "#2A2A31", panel = "#17140f", bg = "#0C0C0E", PX = 108;
   let s = '<rect width="' + W + '" height="' + H + '" fill="' + bg + '"/>';
@@ -126,7 +126,28 @@ function recapSVG() {
     (PARTIAL ? "WRAP " + S.year + " · JUSQU'ICI" : "C'EST TON WRAP " + S.year), true, 4);
   s += svgT(PX, 1858, "#6b6b73", 26, "500", "genere par git-wrapped", true, 4);
   return '<svg xmlns="http://www.w3.org/2000/svg" width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '">'
-    + '<defs><style>' + fontFaceCSS() + '</style></defs>' + s + '</svg>';
+    + '<defs><style>' + (fontCSS || fontFaceCSS()) + '</style></defs>' + s + '</svg>';
+}
+// Polices pour l'export : inline les woff2 en base64 (sinon url() relatif -> fallback
+// dans le PNG rasterisé). Sur la CLI, fontFaceCSS() contient déjà du base64.
+let _fontCache = null;
+async function exportFontCSS() {
+  if (_fontCache != null) return _fontCache;
+  let css = fontFaceCSS();
+  if (!/url\(/.test(css) || /url\(\s*['"]?data:/.test(css)) { _fontCache = css; return css; }
+  const uniq = [...new Set([...css.matchAll(/url\(([^)]+)\)/g)]
+    .map(m => m[1].trim().replace(/^['"]|['"]$/g, "")))];
+  const map = {};
+  await Promise.all(uniq.map(async u => {
+    try {
+      const buf = await (await fetch(u)).arrayBuffer(), bytes = new Uint8Array(buf);
+      let bin = ""; for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+      map[u] = "data:font/woff2;base64," + btoa(bin);
+    } catch (e) { map[u] = u; }
+  }));
+  css = css.replace(/url\(([^)]+)\)/g, (m, p) =>
+    "url(" + (map[p.trim().replace(/^['"]|['"]$/g, "")] || p) + ")");
+  _fontCache = css; return css;
 }
 function svgShare(svg, name, done) {
   const url = URL.createObjectURL(new Blob([svg], { type: "image/svg+xml;charset=utf-8" }));
@@ -151,42 +172,177 @@ function svgShare(svg, name, done) {
     a.download = name.replace(/\.png$/, ".svg"); document.body.appendChild(a); a.click(); a.remove(); fin(); };
   img.src = url;
 }
-function shareRecap() { showExporting(true); svgShare(recapSVG(), "git-wrapped-" + S.year + ".png", () => showExporting(false)); }
+function shareRecap() { showExporting(true);
+  exportFontCSS().then(fc => svgShare(recapSVG(fc), "git-wrapped-" + S.year + ".png",
+    () => showExporting(false))); }
 
-// ---- export d'une carte quelconque (contenu clé extrait du DOM, une seule fiche) ----
-function pick(card, sel) { const e = card.querySelector(sel); return e ? e.textContent.trim() : ""; }
+// ---- export fidèle d'une carte : SVG natif reconstruit depuis S (clone 1:1) ----
 function wrapTxt(t, max) { const ws = String(t).split(" "), out = []; let cur = "";
   for (const w of ws) { if ((cur + " " + w).trim().length > max) { if (cur) out.push(cur.trim()); cur = w; }
     else cur += " " + w; } if (cur.trim()) out.push(cur.trim()); return out; }
-function cardPosterSVG(x) {
-  const W = 1080, H = 1920, bg = "#0C0C0E", ink = "#F4F3EE", dim = "#8b8b85", PX = 108;
-  let s = '<rect width="' + W + '" height="' + H + '" fill="' + bg + '"/>';
-  s += svgT(PX, 190, x.acc, 32, "800", "GIT WRAPPED · " + S.year, true, 8);
-  let y = 780;
-  if (x.eyebrow) s += svgT(PX, y - 130, x.acc, 34, "800",
-    x.eyebrow.replace(/^\/\/\s*/, "").replace(/^devine\s·\s/i, "").toUpperCase(), true, 4);
-  if (x.headline) {
-    const hl = x.headline, fs = hl.length <= 6 ? 280 : hl.length <= 12 ? 160 : 96;
-    s += svgT(PX, y, ink, fs, "700", hl, false, 0); y += fs * 0.55 + 60;
-  } else y -= 60;
-  if (x.unit) { s += svgT(PX, y, x.acc, 46, "800", x.unit.toUpperCase(), true, 3); y += 90; }
-  if (x.note) { y += 24; for (const line of wrapTxt(x.note, 32)) { s += svgT(PX, y, dim, 40, "500", line, false, 0); y += 56; } }
-  s += svgT(PX, 1858, "#6b6b73", 26, "500", "genere par git-wrapped", true, 4);
-  return '<svg xmlns="http://www.w3.org/2000/svg" width="' + W + '" height="' + H
-    + '" viewBox="0 0 ' + W + ' ' + H + '"><defs><style>' + fontFaceCSS() + '</style></defs>' + s + '</svg>';
+const _mc = document.createElement("canvas"), _mx = _mc.getContext("2d");
+function measureW(t, px, mono, weight) {
+  _mx.font = (weight || 700) + " " + px + "px " + (mono ? "'Mono',monospace" : "'Grotesk',sans-serif");
+  return _mx.measureText(t).width;
+}
+const INK = "#F4F3EE", DIM = "#8b8b85", PANEL = "#141417", HLINE = "#2A2A31";
+function svgBlock(x, y, w, h, acc) {
+  return '<rect x="' + (x + 18) + '" y="' + (y + 18) + '" width="' + w + '" height="' + h + '" fill="' + acc + '"/>'
+    + '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" fill="' + PANEL + '" stroke="' + INK + '" stroke-width="6"/>';
+}
+// chaque item = { h, draw(x, yTop) -> chaîne svg }
+function iEyebrow(t, acc) { return { h: 54, draw: (x, y) =>
+  svgT(x, y + 40, acc, 40, "800", t.toUpperCase(), true, 5) }; }
+function iBlockNum(t, acc, size) {
+  const bw = measureW(t, size, false, 700) + 80, bh = size * 0.72 + 68;
+  return { h: bh, draw: (x, y) => svgBlock(x, y, bw, bh, acc)
+    + svgT(x + 40, y + bh * 0.5 + size * 0.26, INK, size, 700, t, false, 0) };
+}
+function iUnit(t, acc) { return { h: 78, draw: (x, y) =>
+  svgT(x, y + 54, acc, 58, "800", t.toUpperCase(), true, 3) }; }
+function iJoke(t, acc) { const lines = wrapTxt(t, 34);
+  return { h: lines.length * 56 + 8, draw: (x, y) => {
+    let s = svgT(x, y + 42, acc, 44, "800", "#", true, 0);
+    lines.forEach((ln, k) => s += svgT(x + (k === 0 ? 44 : 0), y + 42 + k * 56, "#DAD9D2", 42, "500", ln, true, 0));
+    return s; } }; }
+function iNote(t) { const lines = wrapTxt(t, 40);
+  return { h: lines.length * 52, draw: (x, y) => lines.map((ln, k) =>
+    svgT(x, y + 40 + k * 52, DIM, 40, "500", ln, true, 0)).join("") }; }
+function iTitle(t) { const lines = wrapTxt(t, 15);
+  return { h: lines.length * 108, draw: (x, y) => lines.map((ln, k) =>
+    svgT(x, y + 78 + k * 108, INK, 96, "700", ln, false, 0)).join("") }; }
+function iChip(t) { const w = measureW(t.toUpperCase(), 36, true, 700) + 56;
+  return { h: 74, draw: (x, y) =>
+    '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="56" fill="none" stroke="' + HLINE + '" stroke-width="2"/>'
+    + svgT(x + 28, y + 40, INK, 36, "700", t.toUpperCase(), true, 4) }; }
+function iCal(acc) {
+  const C = S.contributions || { weeks: [], max: 0 }, max = C.max || 1, cs = 12, gp = 3;
+  return { h: 7 * (cs + gp) + 20, draw: (x, y) => { let s = "";
+    C.weeks.forEach((w, wi) => w.forEach((c, di) => { if (!c) return;
+      const bx = x + wi * (cs + gp), by = y + di * (cs + gp);
+      s += '<rect x="' + bx + '" y="' + by + '" width="' + cs + '" height="' + cs + '" rx="1" fill="rgba(244,243,238,.06)"/>';
+      const lv = c.count === 0 ? 0 : Math.min(4, Math.ceil(c.count / max * 4));
+      if (lv > 0) s += '<rect x="' + bx + '" y="' + by + '" width="' + cs + '" height="' + cs + '" rx="1" fill="' + acc + '" fill-opacity="' + [0, .3, .55, .78, 1][lv] + '"/>'; }));
+    return s; } }; }
+function iRecord(count, date, acc) {
+  return { h: 150, draw: (x, y) =>
+    '<rect x="' + x + '" y="' + y + '" width="10" height="140" fill="' + acc + '"/>'
+    + svgT(x + 44, y + 34, DIM, 32, "700", "RECORD DU JOUR", true, 5)
+    + svgT(x + 44, y + 108, acc, 64, "700", fmt(count), false, 0)
+    + svgT(x + 44 + measureW(fmt(count), 64, false, 700) + 22, y + 108, INK, 52, "700",
+        "commits · le " + frDate(date), false, 0) }; }
+function iRank(items, acc, CW) {
+  const rows = items.slice(0, 5);
+  let hh = 0; rows.forEach((_, k) => hh += k === 0 ? 88 : 68);
+  return { h: hh, draw: (x, y) => { let s = "", cy = y;
+    rows.forEach((it, k) => { const top = k === 0, sz = top ? 62 : 46;
+      s += svgT(x, cy + sz * 0.8, top ? acc : DIM, sz, "700", String(k + 1).padStart(2, "0"), true, 0);
+      s += svgT(x + 90, cy + sz * 0.8, top ? acc : INK, sz, "700", it.nm, true, 0);
+      s += svgT(x + CW, cy + sz * 0.8, DIM, sz * 0.8, "700", fmt(it.ct), true, 0, "end");
+      cy += top ? 88 : 68; });
+    return s; } }; }
+function iDiff(add, del) { return { h: 400, draw: (x, y) =>
+  svgT(x, y + 150, "#56D364", 176, "700", "+" + fmt(add), false, 0)
+  + svgT(x, y + 350, "#F0616D", 176, "700", "−" + fmt(del), false, 0) }; }
+function iName(t, acc) { const lines = wrapTxt(t, 13);
+  return { h: lines.length * 128, draw: (x, y) => lines.map((ln, k) =>
+    svgT(x, y + 100 + k * 128, acc, 122, "700", ln, false, 0)).join("") }; }
+function iVtag(t) { const lines = wrapTxt("« " + t + " »", 24);
+  return { h: lines.length * 74 + 10, draw: (x, y) => lines.map((ln, k) =>
+    svgT(x, y + 56 + k * 74, INK, 60, "500", ln, false, 0)).join("") }; }
+function iBadges(traits, acc, CW) {
+  const chips = traits.map(t => ({ t, w: measureW(t, 36, true, 700) + 44 }));
+  const gap = 20, rows = [[]]; let rw = 0;
+  chips.forEach(c => { if (rw + c.w > CW && rows[rows.length - 1].length) { rows.push([]); rw = 0; }
+    rows[rows.length - 1].push(c); rw += c.w + gap; });
+  return { h: rows.length * 74, draw: (x, y) => { let s = "";
+    rows.forEach((row, ri) => { let cx = x;
+      row.forEach(c => { s += '<rect x="' + cx + '" y="' + (y + ri * 74) + '" width="' + c.w + '" height="56" fill="none" stroke="' + acc + '" stroke-width="3"/>'
+        + svgT(cx + 22, y + ri * 74 + 40, acc, 36, "700", c.t, true, 2); cx += c.w + gap; }); });
+    return s; } }; }
+function stackBottom(items, x, bottom) {
+  const gap = 46, total = items.reduce((a, i) => a + i.h, 0) + gap * (items.length - 1);
+  let y = bottom - total, s = "";
+  items.forEach(it => { s += it.draw(x, y); y += it.h + gap; });
+  return s;
+}
+function stackTop(items, x, top) {
+  const gap = 40; let y = top, s = "";
+  items.forEach(it => { s += it.draw(x, y); y += it.h + gap; });
+  return s;
+}
+function frameSVG(body, acc, i, fontCSS) {
+  let s = '<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1920" viewBox="0 0 1080 1920">'
+    + '<defs>'
+    + '<radialGradient id="g1" cx="82%" cy="4%" r="72%"><stop offset="0" stop-color="' + acc + '" stop-opacity=".22"/><stop offset=".6" stop-color="' + acc + '" stop-opacity="0"/></radialGradient>'
+    + '<radialGradient id="g2" cx="6%" cy="100%" r="62%"><stop offset="0" stop-color="' + acc + '" stop-opacity=".09"/><stop offset=".55" stop-color="' + acc + '" stop-opacity="0"/></radialGradient>'
+    + '<style>' + (fontCSS || fontFaceCSS()) + '</style></defs>'
+    + '<rect width="1080" height="1920" fill="#0C0C0E"/>'
+    + '<rect width="1080" height="1920" fill="url(#g1)"/>'
+    + '<rect width="1080" height="1920" fill="url(#g2)"/>';
+  s += svgT(96, 92, DIM, 30, "700", "● git-wrapped", true, 4);
+  s += svgT(984, 92, DIM, 30, "700", pad(i + 1) + " / " + pad(slides.length), true, 4, "end");
+  const n = slides.length, g = 10, pw = (888 - g * (n - 1)) / n;
+  for (let k = 0; k < n; k++) { const bx = 96 + k * (pw + g);
+    s += '<rect x="' + bx + '" y="120" width="' + pw + '" height="10" fill="none" stroke="' + HLINE + '" stroke-width="2"/>';
+    if (k <= i) s += '<rect x="' + bx + '" y="120" width="' + pw + '" height="10" fill="' + acc + '"/>'; }
+  s += body;
+  s += svgT(96, 1866, "#6b6b73", 26, "500", "genere par git-wrapped", true, 4);
+  return s + '</svg>';
+}
+function cardSVG(i, fontCSS) {
+  if (i === 9) return recapSVG(fontCSS);
+  const acc = ACCENTS[i % ACCENTS.length], PX = 96, CW = 888;
+  let items = [], top = false;
+  if (i === 0) {
+    items = [iEyebrow("// ton année en code", acc), iBlockNum(String(S.year), acc, 236),
+      iTitle(PARTIAL ? "Tes commits, jusqu'ici." : "Récap de tes commits.")];
+    items.push(S.empty ? iNote("silence radio — aucun commit en " + S.year + ".")
+      : iChip("▸ appuie pour démarrer"));
+  } else if (i === 1) {
+    items = [iEyebrow("// cette année, tu as poussé", acc), iBlockNum(fmt(S.total_commits), acc, 236),
+      iUnit("commits", acc), iJoke(commitJoke(S.total_commits), acc),
+      iNote("sur " + fmt(S.volume.active_days) + " jours actifs, dans " + fmt(S.projects.repo_count) + " dépôts.")];
+  } else if (i === 2) {
+    items = [iEyebrow("// ton rythme", acc),
+      iTitle("Tu codes surtout à " + S.rhythm.peak_hour + "h, le " + DAYS[S.rhythm.peak_weekday] + "."),
+      iCal(acc), iJoke(rhythmJoke(S.rhythm.peak_hour), acc),
+      iNote(S.rhythm.night_owl_pct + "% de tes commits tombent entre 22h et 5h.")];
+  } else if (i === 3) {
+    items = [iEyebrow("// ta plus longue série", acc), iBlockNum(fmt(S.volume.longest_streak), acc, 236),
+      iUnit("jours d'affilée", acc), iJoke(streakJoke(S.volume.longest_streak), acc),
+      iRecord(S.volume.busiest_day.count, S.volume.busiest_day.date, acc)];
+  } else if (i === 4) {
+    items = [iEyebrow("// le bilan des dégâts", acc), iDiff(S.volume.added, S.volume.deleted),
+      iUnit("lignes écrites / effacées", acc), iJoke(linesJoke(S.volume.added, S.volume.deleted), acc)];
+  } else if (i === 5) {
+    top = true;
+    items = [iEyebrow("// ton obsession", acc),
+      iRank(S.projects.top_repos.map(r => ({ nm: r.name, ct: r.count })), acc, CW),
+      iJoke(projectJoke(S.projects.top_repos[0].count, S.total_commits), acc)];
+  } else if (i === 6) {
+    top = true; const langs = langStats();
+    items = [iEyebrow("// ta stack de l'année", acc), iRank(langs, acc, CW), iJoke(langJoke(langs[0].nm), acc)];
+  } else if (i === 7) {
+    const w0 = S.words.top_words[0];
+    let sz = 220; while (measureW(w0.word, sz, false, 700) > CW - 120 && sz > 90) sz -= 10;
+    items = [iEyebrow("// ton mot fétiche", acc), iBlockNum(w0.word, acc, sz),
+      iUnit("écrit " + fmt(w0.count) + " fois", acc)];
+    const others = S.words.top_words.slice(1, 5).map(w => w.word);
+    if (others.length) items.push(iNote("aussi : " + others.join(" · ")));
+    items.push(iJoke(wordJoke(w0.word), acc));
+  } else if (i === 8) {
+    top = true;
+    items = [iEyebrow("// verdict", acc), iName(S.archetype.title, acc), iVtag(S.archetype.tagline),
+      iBadges(S.archetype.traits, acc, CW)];
+  }
+  const body = top ? stackTop(items, PX, 360) : stackBottom(items, PX, 1700);
+  return frameSVG(body, acc, i, fontCSS);
 }
 function exportCard() {
-  const card = slides[idx];
-  const acc = (getComputedStyle(card).getPropertyValue("--acc") || "#D6FF3D").trim();
-  const diffs = [...card.querySelectorAll(".diff")].map(d => d.textContent.trim()).join("   ");
-  const headline = pick(card, ".year") || pick(card, ".num") || pick(card, ".word")
-    || diffs || pick(card, ".name") || pick(card, ".rank .r.top .n");
-  const exp = { acc, eyebrow: pick(card, ".eyebrow"), headline,
-    unit: pick(card, ".unit") || (headline ? "" : pick(card, ".tag")),
-    note: pick(card, ".joke") || pick(card, ".vtag") || pick(card, ".note") };
   showExporting(true);
-  svgShare(cardPosterSVG(exp), "git-wrapped-" + S.year + "-" + pad(idx + 1) + ".png",
-    () => showExporting(false));
+  exportFontCSS().then(fc => svgShare(cardSVG(idx, fc),
+    "git-wrapped-" + S.year + "-" + pad(idx + 1) + ".png", () => showExporting(false)));
 }
 function showExporting(on) {
   let ov = document.getElementById("expov");
@@ -637,9 +793,22 @@ playBtn.addEventListener("click", e => { e.stopPropagation(); firstGesture(); se
 muteBtn.addEventListener("click", e => { e.stopPropagation(); toggleMute(); });
 expBtn.addEventListener("click", e => { e.stopPropagation(); exportCard(); });
 
-let audioCtx, master, musicTimer, musicOn = true, musicStarted = false;
+let audioCtx, master, musicTimer, track = null, musicOn = true, musicStarted = false;
+const TRACK_VOL = 0.45;
+// Si un vrai morceau libre de droits est déposé (web/music.mp3), on l'utilise ;
+// sinon on retombe sur le chiptune généré (déjà 100% libre de droits). La sonde
+// se fait tôt (avant le 1er geste) pour rester déclenchable par le geste.
+let hasTrack = false;
+fetch("./music.mp3", { method: "HEAD" }).then(r => { if (r.ok) hasTrack = true; }).catch(() => {});
 function startMusic() {
   if (musicStarted) return; musicStarted = true;
+  if (hasTrack) {
+    track = new Audio("./music.mp3"); track.loop = true;
+    track.volume = musicOn ? TRACK_VOL : 0;
+    track.play().catch(() => startChiptune());
+  } else startChiptune();
+}
+function startChiptune() {
   const AC = window.AudioContext || window.webkitAudioContext;
   if (!AC) return;
   audioCtx = new AC();
@@ -662,10 +831,12 @@ function toggleMute() {
   musicOn = !musicOn;
   muteBtn.classList.toggle("off", !musicOn);
   if (!musicStarted && musicOn) startMusic();
+  if (track) track.volume = musicOn ? TRACK_VOL : 0;
   if (master) master.gain.value = musicOn ? 0.06 : 0;
 }
 function firstGesture() {
   if (musicOn) startMusic();
+  if (track && track.paused && musicOn) track.play().catch(() => {});
   if (audioCtx && audioCtx.state === "suspended") audioCtx.resume();
 }
 

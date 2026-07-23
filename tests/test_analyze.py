@@ -123,18 +123,29 @@ class AnalyzeTest(unittest.TestCase):
 
 
 class ArchetypeTest(unittest.TestCase):
-    def test_night_owl_pompier(self) -> None:
+    def test_nocturne_pompier(self) -> None:
         commits = [commit(datetime(2026, 1, 1, 3).astimezone(), subject="fix " + str(i))
                    for i in range(5)]
         arch = analyze(commits, 2026)["archetype"]
-        self.assertEqual(arch["title"], "Night Owl Pompier")
+        self.assertEqual(arch["title"], "Créature Nocturne Pompier")  # 100% nuit -> Nocturne
         self.assertTrue(arch["tagline"])
         self.assertIn("100% la nuit", arch["traits"])
 
-    def test_builder_when_more_added_than_deleted(self) -> None:
-        commits = [commit(dt(2026, 1, 1, 14), subject="add feature", added=50, deleted=1)]
+    def test_builder_when_add_and_delete_balanced(self) -> None:
+        commits = [commit(dt(2026, 1, 1, 14), subject="add feature", added=50, deleted=40)]
         arch = analyze(commits, 2026)["archetype"]
-        self.assertIn("Bâtisseur", arch["title"])
+        self.assertEqual(arch["title"], "Diurne Bâtisseur")
+
+    def test_bulldozer_when_only_additions(self) -> None:
+        commits = [commit(dt(2026, 1, 1, 14), subject="add feature", added=200, deleted=1)]
+        arch = analyze(commits, 2026)["archetype"]
+        self.assertIn("Bulldozer", arch["title"])
+
+    def test_diplomate_when_merge_dominates(self) -> None:
+        commits = [commit(dt(2026, 1, i + 1, 14), subject="merge branch", added=5, deleted=5)
+                   for i in range(4)]
+        arch = analyze(commits, 2026)["archetype"]
+        self.assertIn("Diplomate", arch["title"])
 
     def test_empty_year_has_no_archetype(self) -> None:
         self.assertEqual(analyze([], 2026)["archetype"], {})

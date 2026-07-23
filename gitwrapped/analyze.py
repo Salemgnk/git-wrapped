@@ -44,26 +44,49 @@ def analyze(commits: list[Commit], year: int) -> dict:
     }
 
 
+def _when_label(night: int, peak: int) -> str:
+    """Créneau horaire dominant (6 profils, du plus nocturne au plus tardif)."""
+    if night >= 60:
+        return "Créature Nocturne"
+    if night >= 40:
+        return "Night Owl"
+    if peak <= 8:
+        return "Lève-tôt"
+    if peak <= 11:
+        return "Matinal"
+    if peak <= 17:
+        return "Diurne"
+    return "Couche-tard"
+
+
+def _craft_label(volume: dict, top_words: set, fix: int) -> tuple:
+    """Métier de dev déduit des mots de commit et du bilan lignes (9 profils)."""
+    if fix >= 35:
+        return "Pompier", "tu éteins plus de feux que tu n'en allumes"
+    if "refactor" in top_words:
+        return "Refactoreur", "jamais tranquille tant que ce n'est pas propre"
+    if "merge" in top_words:
+        return "Diplomate", "ta vie, c'est réconcilier des branches fâchées"
+    if "test" in top_words:
+        return "Gardien", "les tests d'abord — les bugs n'ont aucune chance"
+    if "docs" in top_words:
+        return "Scribe", "tu écris de la doc : espèce en voie de disparition"
+    if "wip" in top_words:
+        return "Brouillon", "« wip » partout, fini un jour, promis ?"
+    if volume["deleted"] > volume["added"] * 1.2:
+        return "Sculpteur", "tu tailles dans la masse — moins, c'est mieux"
+    if volume["added"] > volume["deleted"] * 3:
+        return "Bulldozer", "tu empiles les lignes sans jamais regarder derrière"
+    return "Bâtisseur", "brique par brique, tu construis pour durer"
+
+
 def _archetype(volume: dict, rhythm: dict, projects: dict, words: dict) -> dict:
     """Déduit une 'personnalité de dev' à partir des stats (déterministe)."""
     night = rhythm["night_owl_pct"]
     fix = words["fix_rate_pct"]
-    if night >= 40:
-        when = "Night Owl"
-    elif rhythm["peak_hour"] <= 11:
-        when = "Lève-tôt"
-    else:
-        when = "Diurne"
-
+    when = _when_label(night, rhythm["peak_hour"])
     top_words = {w["word"] for w in words["top_words"][:5]}
-    if fix >= 35:
-        craft, tagline = "Pompier", "tu éteins plus de feux que tu n'en allumes"
-    elif "refactor" in top_words:
-        craft, tagline = "Refactoreur", "jamais tranquille tant que ce n'est pas propre"
-    elif volume["deleted"] > volume["added"]:
-        craft, tagline = "Sculpteur", "tu tailles dans la masse — moins, c'est mieux"
-    else:
-        craft, tagline = "Bâtisseur", "brique par brique, tu empiles les lignes"
+    craft, tagline = _craft_label(volume, top_words, fix)
 
     lang = projects["languages"][0]["ext"] if projects["languages"] else None
     traits = [f"{night}% la nuit", f"fix {fix}%"]
