@@ -34,6 +34,17 @@ body { background: #050506; color: var(--ink); font-family: var(--sans);
   display: flex; align-items: center; justify-content: center; line-height: 1; }
 .cbtn.off { opacity: .45; }
 
+.expov { position: absolute; inset: 0; z-index: 40; display: none; flex-direction: column;
+  align-items: center; justify-content: center; gap: 3cqh;
+  background: rgba(5,5,6,.82); backdrop-filter: blur(3px); }
+.expov.on { display: flex; }
+.expov .expbars { display: flex; gap: 1.4cqw; height: 7cqh; align-items: flex-end; }
+.expov .expbars i { width: 1.4cqw; background: var(--acc, #D6FF3D); height: 20%;
+  animation: lp 0.9s ease-in-out infinite; }
+@keyframes lp { 0%,100% { height: 20%; opacity: .5; } 50% { height: 100%; opacity: 1; } }
+.expov .expmsg { font-family: var(--mono); font-size: 2.1cqh; color: var(--paper);
+  letter-spacing: .04em; }
+
 /* ---- deck ---- */
 .deck { position: absolute; inset: 0; z-index: 5; }
 .card { position: absolute; inset: 0; display: flex; flex-direction: column;

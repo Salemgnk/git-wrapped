@@ -64,15 +64,19 @@ f.addEventListener("submit", async e => {
   errEl.textContent = "";
   document.getElementById("luser").textContent = "@" + user;
   loading.classList.add("on");
+  const t0 = performance.now();
+  // garde l'écran de chargement visible au moins 900 ms (sinon il flashe sur du cache)
+  const settle = () => new Promise(r => setTimeout(r, Math.max(0, 900 - (performance.now() - t0))));
   try {
     const r = await fetch("/api/wrapped?user=" + encodeURIComponent(user));
+    await settle();
     if (r.status === 404) { loading.classList.remove("on"); errEl.textContent = "pseudo introuvable."; return; }
     if (!r.ok) { loading.classList.remove("on"); errEl.textContent = "réessaie plus tard."; return; }
     const stats = await r.json();
     loading.classList.remove("on");
     landing.style.display = "none";
     renderWrapped(app, stats);
-  } catch (_) { loading.classList.remove("on"); errEl.textContent = "réessaie plus tard."; }
+  } catch (_) { await settle(); loading.classList.remove("on"); errEl.textContent = "réessaie plus tard."; }
 });
 </script>
 </body>

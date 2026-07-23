@@ -128,27 +128,74 @@ function recapSVG() {
   return '<svg xmlns="http://www.w3.org/2000/svg" width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '">'
     + '<defs><style>' + fontFaceCSS() + '</style></defs>' + s + '</svg>';
 }
-function shareRecap() {
-  const url = URL.createObjectURL(new Blob([recapSVG()], { type: "image/svg+xml;charset=utf-8" }));
+function svgShare(svg, name, done) {
+  const url = URL.createObjectURL(new Blob([svg], { type: "image/svg+xml;charset=utf-8" }));
   const img = new Image();
+  const fin = () => { if (done) done(); };
   img.onload = () => {
     const cv = document.createElement("canvas"); cv.width = 1080; cv.height = 1920;
     cv.getContext("2d").drawImage(img, 0, 0);
     cv.toBlob(async blob => {
       URL.revokeObjectURL(url);
-      const name = "git-wrapped-" + S.year + ".png";
       const file = new File([blob], name, { type: "image/png" });
       if (navigator.canShare && navigator.canShare({ files: [file] })) {
         try { await navigator.share({ files: [file], title: "Git Wrapped " + S.year,
-          text: "Mon année en code 🖥️" }); return; } catch (e) { if (e.name === "AbortError") return; }
+          text: "Mon année en code 🖥️" }); fin(); return; }
+        catch (e) { if (e.name === "AbortError") { fin(); return; } }
       }
       const a = el("a"); a.href = URL.createObjectURL(blob); a.download = name;
-      document.body.appendChild(a); a.click(); a.remove();
+      document.body.appendChild(a); a.click(); a.remove(); fin();
     }, "image/png");
   };
   img.onerror = () => { const a = el("a"); a.href = url;
-    a.download = "git-wrapped-" + S.year + ".svg"; document.body.appendChild(a); a.click(); a.remove(); };
+    a.download = name.replace(/\.png$/, ".svg"); document.body.appendChild(a); a.click(); a.remove(); fin(); };
   img.src = url;
+}
+function shareRecap() { showExporting(true); svgShare(recapSVG(), "git-wrapped-" + S.year + ".png", () => showExporting(false)); }
+
+// ---- export d'une carte quelconque (contenu clé extrait du DOM, une seule fiche) ----
+function pick(card, sel) { const e = card.querySelector(sel); return e ? e.textContent.trim() : ""; }
+function wrapTxt(t, max) { const ws = String(t).split(" "), out = []; let cur = "";
+  for (const w of ws) { if ((cur + " " + w).trim().length > max) { if (cur) out.push(cur.trim()); cur = w; }
+    else cur += " " + w; } if (cur.trim()) out.push(cur.trim()); return out; }
+function cardPosterSVG(x) {
+  const W = 1080, H = 1920, bg = "#0C0C0E", ink = "#F4F3EE", dim = "#8b8b85", PX = 108;
+  let s = '<rect width="' + W + '" height="' + H + '" fill="' + bg + '"/>';
+  s += svgT(PX, 190, x.acc, 32, "800", "GIT WRAPPED · " + S.year, true, 8);
+  let y = 780;
+  if (x.eyebrow) s += svgT(PX, y - 130, x.acc, 34, "800",
+    x.eyebrow.replace(/^\/\/\s*/, "").replace(/^devine\s·\s/i, "").toUpperCase(), true, 4);
+  if (x.headline) {
+    const hl = x.headline, fs = hl.length <= 6 ? 280 : hl.length <= 12 ? 160 : 96;
+    s += svgT(PX, y, ink, fs, "700", hl, false, 0); y += fs * 0.55 + 60;
+  } else y -= 60;
+  if (x.unit) { s += svgT(PX, y, x.acc, 46, "800", x.unit.toUpperCase(), true, 3); y += 90; }
+  if (x.note) { y += 24; for (const line of wrapTxt(x.note, 32)) { s += svgT(PX, y, dim, 40, "500", line, false, 0); y += 56; } }
+  s += svgT(PX, 1858, "#6b6b73", 26, "500", "genere par git-wrapped", true, 4);
+  return '<svg xmlns="http://www.w3.org/2000/svg" width="' + W + '" height="' + H
+    + '" viewBox="0 0 ' + W + ' ' + H + '"><defs><style>' + fontFaceCSS() + '</style></defs>' + s + '</svg>';
+}
+function exportCard() {
+  const card = slides[idx];
+  const acc = (getComputedStyle(card).getPropertyValue("--acc") || "#D6FF3D").trim();
+  const diffs = [...card.querySelectorAll(".diff")].map(d => d.textContent.trim()).join("   ");
+  const headline = pick(card, ".year") || pick(card, ".num") || pick(card, ".word")
+    || diffs || pick(card, ".name");
+  const exp = { acc, eyebrow: pick(card, ".eyebrow"), headline,
+    unit: pick(card, ".unit"),
+    note: pick(card, ".joke") || pick(card, ".vtag") || pick(card, ".tag") || pick(card, ".note") };
+  showExporting(true);
+  svgShare(cardPosterSVG(exp), "git-wrapped-" + S.year + "-" + pad(idx + 1) + ".png",
+    () => showExporting(false));
+}
+function showExporting(on) {
+  let ov = document.getElementById("expov");
+  if (!ov) { ov = el("div", "expov"); ov.id = "expov";
+    ov.innerHTML = '<div class="expbars"></div><div class="expmsg">génération de la fiche…</div>';
+    for (let i = 0; i < 16; i++) { const b = el("i");
+      b.style.animationDelay = (-i * 0.06).toFixed(2) + "s"; ov.querySelector(".expbars").appendChild(b); }
+    stage.appendChild(ov); }
+  ov.classList.toggle("on", on);
 }
 
 // ---- CARTE 01 : INTRO ----
@@ -583,10 +630,12 @@ const stage = mount.querySelector("#stage");
 const ctrl = el("div", "ctrl");
 const playBtn = el("button", "cbtn", "❚❚");
 const muteBtn = el("button", "cbtn", "♪");
-ctrl.appendChild(playBtn); ctrl.appendChild(muteBtn);
+const expBtn = el("button", "cbtn", "⤓");
+ctrl.appendChild(expBtn); ctrl.appendChild(playBtn); ctrl.appendChild(muteBtn);
 stage.appendChild(ctrl);
 playBtn.addEventListener("click", e => { e.stopPropagation(); firstGesture(); setPlaying(!playing); });
 muteBtn.addEventListener("click", e => { e.stopPropagation(); toggleMute(); });
+expBtn.addEventListener("click", e => { e.stopPropagation(); exportCard(); });
 
 let audioCtx, master, musicTimer, musicOn = true, musicStarted = false;
 function startMusic() {
