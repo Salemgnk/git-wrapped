@@ -180,10 +180,10 @@ function exportCard() {
   const acc = (getComputedStyle(card).getPropertyValue("--acc") || "#D6FF3D").trim();
   const diffs = [...card.querySelectorAll(".diff")].map(d => d.textContent.trim()).join("   ");
   const headline = pick(card, ".year") || pick(card, ".num") || pick(card, ".word")
-    || diffs || pick(card, ".name");
+    || diffs || pick(card, ".name") || pick(card, ".rank .r.top .n");
   const exp = { acc, eyebrow: pick(card, ".eyebrow"), headline,
-    unit: pick(card, ".unit"),
-    note: pick(card, ".joke") || pick(card, ".vtag") || pick(card, ".tag") || pick(card, ".note") };
+    unit: pick(card, ".unit") || (headline ? "" : pick(card, ".tag")),
+    note: pick(card, ".joke") || pick(card, ".vtag") || pick(card, ".note") };
   showExporting(true);
   svgShare(cardPosterSVG(exp), "git-wrapped-" + S.year + "-" + pad(idx + 1) + ".png",
     () => showExporting(false));
