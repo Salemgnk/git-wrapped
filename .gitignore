@@ -5,5 +5,6 @@ preview.html
 __preview.html
 mon-wrapped-*.html
 git-wrapped-*.html
+docs/superpowers/
 .vercel
 .env*
