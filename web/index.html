@@ -7,42 +7,94 @@
 <link rel="stylesheet" href="./fonts.css">
 <link rel="stylesheet" href="./wrapped.css">
 <style>
-  body { margin:0; background:#050506; color:#F4F3EE; font-family:'Grotesk',system-ui,sans-serif;
-    min-height:100dvh; display:flex; align-items:center; justify-content:center; }
-  .landing { text-align:center; padding:24px; }
-  .landing h1 { font-family:'Mono',monospace; font-size:clamp(28px,6vw,52px); font-weight:700;
-    letter-spacing:-.03em; }
-  .landing .sub { color:#8b8b85; margin:8px 0 28px; font-family:'Mono',monospace; }
-  .landing form { display:flex; gap:10px; justify-content:center; flex-wrap:wrap; }
-  .landing input { background:#141417; border:2px solid #2A2A31; color:#F4F3EE; font-size:18px;
-    padding:14px 16px; font-family:'Mono',monospace; min-width:min(280px,72vw); }
-  .landing button { background:#D6FF3D; color:#0C0C0E; border:none; font-weight:800; font-size:18px;
-    padding:14px 22px; cursor:pointer; }
-  .landing .err { color:#F0616D; margin-top:14px; min-height:1.4em; font-family:'Mono',monospace; }
+  :root { --bg:#050506; --panel:#0C0C0E; --line:#2A2A31; --ink:#F4F3EE;
+    --dim:#8b8b85; --acc:#D6FF3D; --mono:'Mono',ui-monospace,Menlo,monospace;
+    --sans:'Grotesk',system-ui,sans-serif; }
+  body { margin:0; background:var(--bg); color:var(--ink); font-family:var(--sans);
+    min-height:100dvh; display:flex; align-items:center; justify-content:center;
+    -webkit-font-smoothing:antialiased;
+    background-image:
+      radial-gradient(70vw 50vh at 82% -6%, color-mix(in srgb,var(--acc) 12%,transparent), transparent 60%),
+      radial-gradient(60vw 44vh at 4% 106%, color-mix(in srgb,var(--acc) 7%,transparent), transparent 55%); }
+
+  .landing { width:min(93vw,600px); padding:24px; display:flex; flex-direction:column; gap:18px; }
+
+  .hero { position:relative; border:2.5px solid var(--line); background:var(--panel);
+    padding:34px 30px 30px; box-shadow:8px 8px 0 rgba(214,255,61,.14); }
+  .hero .tag { font-family:var(--mono); font-size:13px; font-weight:700; letter-spacing:.14em;
+    text-transform:uppercase; color:var(--acc); }
+  .hero h1 { font-family:var(--mono); font-weight:700; letter-spacing:-.03em; line-height:.92;
+    font-size:clamp(40px,11vw,72px); margin:10px 0 0; }
+  .hero h1 span { color:var(--acc); }
+  .hero h1 .cur { display:inline-block; width:.09em; height:.82em; background:var(--acc);
+    margin-left:.06em; vertical-align:-.06em; animation:blink 1s steps(1) infinite; }
+  @keyframes blink { 50% { opacity:0; } }
+  .hero .desc { color:#cfceC7; font-size:clamp(15px,3.8vw,17px); line-height:1.5; margin:16px 0 0;
+    max-width:46ch; }
+  .hero .desc b { color:var(--ink); }
+
+  form { display:flex; gap:10px; margin-top:24px; flex-wrap:wrap; }
+  input { flex:1; min-width:200px; background:#050506; border:2.5px solid var(--line);
+    color:var(--ink); font-size:17px; padding:14px 16px; font-family:var(--mono); }
+  input:focus { outline:none; border-color:var(--acc); }
+  button.cta { border:2.5px solid var(--ink); box-shadow:5px 5px 0 var(--acc); background:var(--acc);
+    color:#0C0C0E; font-family:var(--sans); font-weight:800; font-size:17px; letter-spacing:.01em;
+    padding:14px 22px; cursor:pointer; white-space:nowrap; }
+  button.cta:active { transform:translate(2px,2px); box-shadow:3px 3px 0 var(--acc); }
+  .err { color:#F0616D; margin-top:14px; min-height:1.3em; font-family:var(--mono); font-size:14px; }
+
+  .feats { display:flex; flex-wrap:wrap; gap:8px 18px; margin-top:22px;
+    font-family:var(--mono); font-size:12.5px; font-weight:700; letter-spacing:.05em;
+    text-transform:uppercase; color:var(--dim); }
+  .feats span .m { color:var(--acc); }
+
+  .repo { align-self:flex-start; display:inline-flex; align-items:center; gap:10px;
+    text-decoration:none; font-family:var(--mono); font-weight:700; font-size:14px;
+    letter-spacing:.04em; color:var(--ink); background:var(--panel);
+    border:2.5px solid var(--line); box-shadow:5px 5px 0 var(--line); padding:12px 18px;
+    transition:box-shadow .12s, border-color .12s, transform .12s; }
+  .repo:hover { border-color:var(--acc); box-shadow:5px 5px 0 var(--acc); }
+  .repo:active { transform:translate(2px,2px); box-shadow:3px 3px 0 var(--acc); }
+  .repo .gh { color:var(--acc); font-size:16px; }
+  .repo .arw { color:var(--dim); }
+
   #app:empty { display:none; }
-  .loading { position:fixed; inset:0; background:#050506; display:none; z-index:50;
+  .loading { position:fixed; inset:0; background:var(--bg); display:none; z-index:50;
     flex-direction:column; align-items:center; justify-content:center; gap:26px; }
   .loading.on { display:flex; }
-  .loading .term { font-family:'Mono',monospace; font-weight:700;
-    font-size:clamp(16px,4.2vw,26px); }
-  .loading .term .u { color:#D6FF3D; }
-  .loading .cur { display:inline-block; width:.55em; height:1.05em; background:#D6FF3D;
+  .loading .term { font-family:var(--mono); font-weight:700; font-size:clamp(16px,4.2vw,26px); }
+  .loading .term .u { color:var(--acc); }
+  .loading .cur { display:inline-block; width:.55em; height:1.05em; background:var(--acc);
     margin-left:.12em; vertical-align:-.16em; animation:blink 1s steps(1) infinite; }
-  @keyframes blink { 50% { opacity:0; } }
   .loading .bars { display:flex; gap:6px; height:40px; align-items:flex-end; }
-  .loading .bars i { width:8px; background:#D6FF3D; height:18%; animation:lp 1s ease-in-out infinite; }
+  .loading .bars i { width:8px; background:var(--acc); height:18%; animation:lp 1s ease-in-out infinite; }
   @keyframes lp { 0%,100% { height:18%; opacity:.5; } 50% { height:100%; opacity:1; } }
-  .loading .msg { font-family:'Mono',monospace; color:#8b8b85; font-size:14px; }
+  .loading .msg { font-family:var(--mono); color:var(--dim); font-size:14px; }
 </style>
 </head>
 <body>
 <div class="landing" id="landing">
-  <h1>git wrapped</h1>
-  <div class="sub">// ton année en code, en un pseudo GitHub</div>
-  <form id="f"><input id="u" placeholder="pseudo GitHub" autocomplete="off"
-    pattern="[A-Za-z0-9-]{1,39}" required>
-    <button type="submit">voir mon wrapped</button></form>
-  <div class="err" id="err"></div>
+  <div class="hero">
+    <div class="tag">// ton année en code</div>
+    <h1>git<span>wrapped</span><span class="cur"></span></h1>
+    <p class="desc">Ton année GitHub transformée en story façon <b>Spotify Wrapped</b> :
+      commits, plus longue série, rythme, langages, mot fétiche et ton
+      <b>archétype de dev</b> — 10 cartes à partager. Tape un pseudo public, c'est tout.</p>
+    <form id="f">
+      <input id="u" placeholder="pseudo GitHub" autocomplete="off"
+        pattern="[A-Za-z0-9-]{1,39}" required>
+      <button type="submit" class="cta">→ voir mon wrapped</button>
+    </form>
+    <div class="err" id="err"></div>
+    <div class="feats">
+      <span><span class="m">◆</span> données publiques</span>
+      <span><span class="m">◆</span> export png</span>
+      <span><span class="m">◆</span> open source</span>
+    </div>
+  </div>
+  <a class="repo" href="https://github.com/Salemgnk/git-wrapped" target="_blank" rel="noopener">
+    <span class="gh">‹/›</span> code source sur github <span class="arw">↗</span>
+  </a>
 </div>
 <div class="loading" id="loading">
   <div class="term">$ git wrapped <span class="u" id="luser"></span><span class="cur"></span></div>
@@ -58,6 +110,9 @@ const f = document.getElementById("f"), errEl = document.getElementById("err"),
 for (let i = 0; i < 22; i++) { const b = document.createElement("i");
   b.style.animationDelay = (-(Math.sin(i / 22 * Math.PI * 3) + 1) * 0.5).toFixed(2) + "s";
   lbars.appendChild(b); }
+// retour à l'accueil depuis le wrapped : le moteur se démonte lui-même (via destroy),
+// on réaffiche juste la landing.
+function backHome() { app.innerHTML = ""; landing.style.display = ""; window.scrollTo(0, 0); }
 f.addEventListener("submit", async e => {
   e.preventDefault();
   const user = document.getElementById("u").value.trim();
@@ -65,7 +120,6 @@ f.addEventListener("submit", async e => {
   document.getElementById("luser").textContent = "@" + user;
   loading.classList.add("on");
   const t0 = performance.now();
-  // garde l'écran de chargement visible au moins 900 ms (sinon il flashe sur du cache)
   const settle = () => new Promise(r => setTimeout(r, Math.max(0, 900 - (performance.now() - t0))));
   try {
     const r = await fetch("/api/wrapped?user=" + encodeURIComponent(user));
@@ -75,7 +129,7 @@ f.addEventListener("submit", async e => {
     const stats = await r.json();
     loading.classList.remove("on");
     landing.style.display = "none";
-    renderWrapped(app, stats);
+    renderWrapped(app, stats, backHome);
   } catch (_) { await settle(); loading.classList.remove("on"); errEl.textContent = "réessaie plus tard."; }
 });
 </script>

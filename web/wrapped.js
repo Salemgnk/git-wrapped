@@ -1,6 +1,7 @@
-function renderWrapped(mount, S) {
+function renderWrapped(mount, S, onExit) {
   mount.innerHTML = '<div class="stage" id="stage">'
-    + '<div class="chrome"><div class="sysbar"><span><span class="dot">\u25cf</span> git-wrapped</span>'
+    + '<div class="chrome"><div class="sysbar">'
+    + '<button class="homebtn" id="homebtn"><span class="dot">\u2190</span> git-wrapped</button>'
     + '<span id="counter">01 / 01</span></div><div class="prog" id="prog"></div></div>'
     + '<div class="deck" id="deck"></div></div>';
 const deck = mount.querySelector("#deck");
@@ -847,15 +848,32 @@ stage.addEventListener("click", e => {
   const r = stage.getBoundingClientRect();
   show(idx + ((e.clientX - r.left) < r.width * 0.32 ? -1 : 1));
 });
-addEventListener("keydown", e => {
+function keyHandler(e) {
   if (e.key === "ArrowRight" || e.key === " ") { firstGesture(); show(idx + 1); e.preventDefault(); }
   else if (e.key === "ArrowLeft") { firstGesture(); show(idx - 1); }
-});
+}
+addEventListener("keydown", keyHandler);
 let sx = null;
 stage.addEventListener("touchstart", e => sx = e.touches[0].clientX, { passive: true });
 stage.addEventListener("touchend", e => { if (sx == null) return; firstGesture();
   const dx = e.changedTouches[0].clientX - sx;
   if (dx < -42) show(idx + 1); else if (dx > 42) show(idx - 1); sx = null; });
+
+// ---- retour accueil : démontage propre (timers, audio, listeners) ----
+function destroy() {
+  clearTimeout(timer); clearInterval(musicTimer);
+  if (track) { try { track.pause(); } catch (e) {} track = null; }
+  if (audioCtx) { try { audioCtx.close(); } catch (e) {} audioCtx = null; }
+  removeEventListener("keydown", keyHandler);
+  mount.innerHTML = "";
+}
+const homebtn = mount.querySelector("#homebtn");
+if (typeof onExit === "function") {
+  homebtn.addEventListener("click", e => { e.stopPropagation(); destroy(); onExit(); });
+} else {
+  homebtn.querySelector(".dot").textContent = "●";   // pas de retour en sortie CLI autonome
+  homebtn.style.cursor = "default"; homebtn.style.pointerEvents = "none";
+}
 show(0);
 }
 window.renderWrapped = renderWrapped;

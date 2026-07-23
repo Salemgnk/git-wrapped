@@ -24,6 +24,12 @@ body { background: #050506; color: var(--ink); font-family: var(--sans);
   font-family: var(--mono); font-size: 1.9cqh; font-weight: 700; letter-spacing: .06em;
   color: var(--dim); text-transform: uppercase; }
 .sysbar .dot { color: var(--acc); }
+.homebtn { font-family: var(--mono); font-size: 1.9cqh; font-weight: 700; letter-spacing: .06em;
+  text-transform: uppercase; color: var(--dim); background: none; border: none; cursor: pointer;
+  padding: .4cqh 0; display: inline-flex; align-items: center; gap: .8cqw;
+  transition: color .12s; }
+.homebtn:hover { color: var(--ink); }
+.homebtn:hover .dot { color: var(--acc); }
 .prog { display: flex; gap: 1.4cqw; margin-top: 1.6cqh; }
 .prog i { flex: 1; height: 6px; border: 1.5px solid var(--line); overflow: hidden; }
 .prog i b { display: block; height: 100%; width: 0; background: var(--acc); }
