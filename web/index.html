@@ -7,65 +7,99 @@
 <link rel="stylesheet" href="./fonts.css">
 <link rel="stylesheet" href="./wrapped.css">
 <style>
-  :root { --bg:#050506; --panel:#0C0C0E; --line:#2A2A31; --ink:#F4F3EE;
+  :root { --bg:#050506; --panel:#0C0C0E; --panel2:#141417; --line:#2A2A31; --ink:#F4F3EE;
     --dim:#8b8b85; --acc:#D6FF3D; --mono:'Mono',ui-monospace,Menlo,monospace;
     --sans:'Grotesk',system-ui,sans-serif; }
+  * { box-sizing:border-box; }
   body { margin:0; background:var(--bg); color:var(--ink); font-family:var(--sans);
-    min-height:100dvh; display:flex; align-items:center; justify-content:center;
-    -webkit-font-smoothing:antialiased;
+    -webkit-font-smoothing:antialiased; min-height:100dvh;
     background-image:
-      radial-gradient(70vw 50vh at 82% -6%, color-mix(in srgb,var(--acc) 12%,transparent), transparent 60%),
-      radial-gradient(60vw 44vh at 4% 106%, color-mix(in srgb,var(--acc) 7%,transparent), transparent 55%); }
-
-  .landing { width:min(93vw,600px); padding:24px; display:flex; flex-direction:column; gap:18px; }
-
-  .hero { position:relative; border:2.5px solid var(--line); background:var(--panel);
-    padding:34px 30px 30px; box-shadow:8px 8px 0 rgba(214,255,61,.14); }
-  .hero .tag { font-family:var(--mono); font-size:13px; font-weight:700; letter-spacing:.14em;
-    text-transform:uppercase; color:var(--acc); }
-  .hero h1 { font-family:var(--mono); font-weight:700; letter-spacing:-.03em; line-height:.92;
-    font-size:clamp(40px,11vw,72px); margin:10px 0 0; }
-  .hero h1 span { color:var(--acc); }
-  .hero h1 .cur { display:inline-block; width:.09em; height:.82em; background:var(--acc);
-    margin-left:.06em; vertical-align:-.06em; animation:blink 1s steps(1) infinite; }
+      radial-gradient(60vw 55vh at 88% -8%, color-mix(in srgb,var(--acc) 13%,transparent), transparent 60%),
+      radial-gradient(50vw 40vh at -6% 108%, color-mix(in srgb,var(--acc) 8%,transparent), transparent 55%); }
   @keyframes blink { 50% { opacity:0; } }
-  .hero .desc { color:#cfceC7; font-size:clamp(15px,3.8vw,17px); line-height:1.5; margin:16px 0 0;
-    max-width:46ch; }
-  .hero .desc b { color:var(--ink); }
+  .cur { display:inline-block; width:.09em; height:.82em; background:var(--acc);
+    margin-left:.05em; vertical-align:-.06em; animation:blink 1s steps(1) infinite; }
 
-  form { display:flex; gap:10px; margin-top:24px; flex-wrap:wrap; }
-  input { flex:1; min-width:200px; background:#050506; border:2.5px solid var(--line);
-    color:var(--ink); font-size:17px; padding:14px 16px; font-family:var(--mono); }
+  /* ---- structure plein écran ---- */
+  .landing { min-height:100dvh; display:grid; grid-template-rows:auto 1fr auto; }
+  .topbar, .botbar { display:flex; align-items:center; justify-content:space-between;
+    gap:16px; padding:22px clamp(20px,5vw,64px); font-family:var(--mono); font-size:13px;
+    font-weight:700; letter-spacing:.08em; text-transform:uppercase; }
+  .topbar { border-bottom:2px solid var(--line); }
+  .botbar { border-top:2px solid var(--line); color:var(--dim); flex-wrap:wrap; }
+  .brand { color:var(--ink); } .brand .dot { color:var(--acc); }
+  .repo { display:inline-flex; align-items:center; gap:9px; text-decoration:none; color:var(--ink);
+    border:2px solid var(--line); box-shadow:4px 4px 0 var(--line); padding:9px 15px;
+    transition:box-shadow .12s,border-color .12s,transform .12s; }
+  .repo:hover { border-color:var(--acc); box-shadow:4px 4px 0 var(--acc); }
+  .repo:active { transform:translate(2px,2px); box-shadow:2px 2px 0 var(--acc); }
+  .repo .gh { color:var(--acc); }
+
+  /* ---- hero deux colonnes ---- */
+  .hero { display:grid; grid-template-columns:1.15fr .85fr; align-items:center;
+    gap:clamp(24px,5vw,72px); padding:clamp(28px,6vh,72px) clamp(20px,5vw,64px); }
+  .left { max-width:640px; }
+  .tag { font-family:var(--mono); font-size:clamp(12px,1.4vw,15px); font-weight:700;
+    letter-spacing:.14em; text-transform:uppercase; color:var(--acc); }
+  h1 { font-family:var(--mono); font-weight:700; letter-spacing:-.035em; line-height:.9;
+    font-size:clamp(52px,11vw,124px); margin:14px 0 0; }
+  h1 span:first-of-type { color:var(--acc); }
+  .desc { color:#cfceC7; font-size:clamp(15px,1.9vw,19px); line-height:1.5;
+    margin:22px 0 0; max-width:48ch; }
+  .desc b { color:var(--ink); }
+
+  form { display:flex; gap:12px; margin-top:30px; flex-wrap:wrap; }
+  input { flex:1; min-width:220px; background:#050506; border:2.5px solid var(--line);
+    color:var(--ink); font-size:18px; padding:16px 18px; font-family:var(--mono); }
   input:focus { outline:none; border-color:var(--acc); }
-  button.cta { border:2.5px solid var(--ink); box-shadow:5px 5px 0 var(--acc); background:var(--acc);
-    color:#0C0C0E; font-family:var(--sans); font-weight:800; font-size:17px; letter-spacing:.01em;
-    padding:14px 22px; cursor:pointer; white-space:nowrap; }
-  button.cta:active { transform:translate(2px,2px); box-shadow:3px 3px 0 var(--acc); }
+  button.cta { border:2.5px solid var(--ink); box-shadow:6px 6px 0 var(--acc); background:var(--acc);
+    color:#0C0C0E; font-family:var(--sans); font-weight:800; font-size:18px; letter-spacing:.01em;
+    padding:16px 26px; cursor:pointer; white-space:nowrap; }
+  button.cta:active { transform:translate(3px,3px); box-shadow:3px 3px 0 var(--acc); }
   .err { color:#F0616D; margin-top:14px; min-height:1.3em; font-family:var(--mono); font-size:14px; }
-
-  .feats { display:flex; flex-wrap:wrap; gap:8px 18px; margin-top:22px;
-    font-family:var(--mono); font-size:12.5px; font-weight:700; letter-spacing:.05em;
+  .feats { display:flex; flex-wrap:wrap; gap:10px 24px; margin-top:26px;
+    font-family:var(--mono); font-size:13px; font-weight:700; letter-spacing:.05em;
     text-transform:uppercase; color:var(--dim); }
-  .feats span .m { color:var(--acc); }
+  .feats i { color:var(--acc); font-style:normal; margin-right:6px; }
 
-  .repo { align-self:flex-start; display:inline-flex; align-items:center; gap:10px;
-    text-decoration:none; font-family:var(--mono); font-weight:700; font-size:14px;
-    letter-spacing:.04em; color:var(--ink); background:var(--panel);
-    border:2.5px solid var(--line); box-shadow:5px 5px 0 var(--line); padding:12px 18px;
-    transition:box-shadow .12s, border-color .12s, transform .12s; }
-  .repo:hover { border-color:var(--acc); box-shadow:5px 5px 0 var(--acc); }
-  .repo:active { transform:translate(2px,2px); box-shadow:3px 3px 0 var(--acc); }
-  .repo .gh { color:var(--acc); font-size:16px; }
-  .repo .arw { color:var(--dim); }
+  /* ---- aperçu carte (colonne droite) ---- */
+  .right { display:flex; justify-content:center; }
+  .mock { width:min(340px,80%); aspect-ratio:9/17.4; background:var(--panel);
+    border:2.5px solid var(--line); box-shadow:14px 14px 0 var(--acc);
+    transform:rotate(2.5deg); padding:18px 18px 22px; display:flex; flex-direction:column;
+    position:relative; overflow:hidden;
+    background-image:radial-gradient(70% 45% at 82% 6%, color-mix(in srgb,var(--acc) 20%,transparent), transparent 60%); }
+  .m-bar { display:flex; justify-content:space-between; font-family:var(--mono); font-size:10px;
+    font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--dim); }
+  .m-bar .dot { color:var(--acc); }
+  .m-prog { display:flex; gap:5px; margin-top:9px; }
+  .m-prog i { flex:1; height:4px; border:1px solid var(--line); }
+  .m-prog i:nth-child(-n+2) { background:var(--acc); border-color:var(--acc); }
+  .m-body { margin-top:auto; display:flex; flex-direction:column; gap:12px; }
+  .m-eye { font-family:var(--mono); font-size:11px; font-weight:700; letter-spacing:.1em;
+    text-transform:uppercase; color:var(--acc); }
+  .m-block { align-self:flex-start; border:2.5px solid var(--ink); box-shadow:6px 6px 0 var(--acc);
+    background:var(--panel2); padding:4px 14px; font-family:var(--sans); font-weight:700;
+    font-size:clamp(44px,13vw,66px); letter-spacing:-.03em; line-height:.9; }
+  .m-unit { font-family:var(--mono); font-size:15px; font-weight:700; letter-spacing:.07em;
+    text-transform:uppercase; color:var(--acc); }
+  .m-joke { font-family:var(--mono); font-size:12px; line-height:1.4; color:#cfceC7; }
+  .m-joke::before { content:"# "; color:var(--acc); font-weight:700; }
 
+  @media (max-width:900px) {
+    .hero { grid-template-columns:1fr; }
+    .right { display:none; }
+    .left { max-width:none; }
+  }
+
+  /* ---- écran de chargement ---- */
   #app:empty { display:none; }
   .loading { position:fixed; inset:0; background:var(--bg); display:none; z-index:50;
     flex-direction:column; align-items:center; justify-content:center; gap:26px; }
   .loading.on { display:flex; }
   .loading .term { font-family:var(--mono); font-weight:700; font-size:clamp(16px,4.2vw,26px); }
   .loading .term .u { color:var(--acc); }
-  .loading .cur { display:inline-block; width:.55em; height:1.05em; background:var(--acc);
-    margin-left:.12em; vertical-align:-.16em; animation:blink 1s steps(1) infinite; }
+  .loading .cur { width:.55em; height:1.05em; margin-left:.12em; vertical-align:-.16em; }
   .loading .bars { display:flex; gap:6px; height:40px; align-items:flex-end; }
   .loading .bars i { width:8px; background:var(--acc); height:18%; animation:lp 1s ease-in-out infinite; }
   @keyframes lp { 0%,100% { height:18%; opacity:.5; } 50% { height:100%; opacity:1; } }
@@ -74,27 +108,50 @@
 </head>
 <body>
 <div class="landing" id="landing">
-  <div class="hero">
-    <div class="tag">// ton année en code</div>
-    <h1>git<span>wrapped</span><span class="cur"></span></h1>
-    <p class="desc">Ton année GitHub transformée en story façon <b>Spotify Wrapped</b> :
-      commits, plus longue série, rythme, langages, mot fétiche et ton
-      <b>archétype de dev</b> — 10 cartes à partager. Tape un pseudo public, c'est tout.</p>
-    <form id="f">
-      <input id="u" placeholder="pseudo GitHub" autocomplete="off"
-        pattern="[A-Za-z0-9-]{1,39}" required>
-      <button type="submit" class="cta">→ voir mon wrapped</button>
-    </form>
-    <div class="err" id="err"></div>
-    <div class="feats">
-      <span><span class="m">◆</span> données publiques</span>
-      <span><span class="m">◆</span> export png</span>
-      <span><span class="m">◆</span> open source</span>
+  <header class="topbar">
+    <div class="brand"><span class="dot">●</span> git wrapped</div>
+    <a class="repo" href="https://github.com/Salemgnk/git-wrapped" target="_blank" rel="noopener">
+      <span class="gh">‹/›</span> code source ↗</a>
+  </header>
+
+  <main class="hero">
+    <div class="left">
+      <div class="tag">// ton année en code, en un pseudo GitHub</div>
+      <h1>git<span>wrapped</span></h1>
+      <p class="desc">Ton année GitHub transformée en story façon <b>Spotify Wrapped</b> :
+        commits, plus longue série, rythme, langages, mot fétiche et ton
+        <b>archétype de dev</b> — 10 cartes à partager, export PNG inclus.</p>
+      <form id="f">
+        <input id="u" placeholder="pseudo GitHub" autocomplete="off"
+          pattern="[A-Za-z0-9-]{1,39}" required>
+        <button type="submit" class="cta">→ voir mon wrapped</button>
+      </form>
+      <div class="err" id="err"></div>
+      <div class="feats">
+        <span><i>◆</i>données 100% publiques</span>
+        <span><i>◆</i>aucune connexion</span>
+        <span><i>◆</i>open source</span>
+      </div>
     </div>
-  </div>
-  <a class="repo" href="https://github.com/Salemgnk/git-wrapped" target="_blank" rel="noopener">
-    <span class="gh">‹/›</span> code source sur github <span class="arw">↗</span>
-  </a>
+
+    <div class="right">
+      <div class="mock" aria-hidden="true">
+        <div class="m-bar"><span><span class="dot">●</span> git-wrapped</span><span>02 / 10</span></div>
+        <div class="m-prog"><i></i><i></i><i></i><i></i><i></i></div>
+        <div class="m-body">
+          <div class="m-eye">// cette année, tu as poussé</div>
+          <div class="m-block">1 284</div>
+          <div class="m-unit">commits</div>
+          <div class="m-joke">git blame, c'est toujours toi. Assume.</div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="botbar">
+    <span>// spotify wrapped, mais pour ton git</span>
+    <span>CLI Python · app web · zéro dépendance</span>
+  </footer>
 </div>
 <div class="loading" id="loading">
   <div class="term">$ git wrapped <span class="u" id="luser"></span><span class="cur"></span></div>

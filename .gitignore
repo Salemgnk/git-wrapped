@@ -2,6 +2,8 @@
 __pycache__/
 *.pyc
 preview.html
+__preview.html
 mon-wrapped-*.html
+git-wrapped-*.html
 .vercel
 .env*
