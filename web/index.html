@@ -20,6 +20,19 @@
     padding:14px 22px; cursor:pointer; }
   .landing .err { color:#F0616D; margin-top:14px; min-height:1.4em; font-family:'Mono',monospace; }
   #app:empty { display:none; }
+  .loading { position:fixed; inset:0; background:#050506; display:none; z-index:50;
+    flex-direction:column; align-items:center; justify-content:center; gap:26px; }
+  .loading.on { display:flex; }
+  .loading .term { font-family:'Mono',monospace; font-weight:700;
+    font-size:clamp(16px,4.2vw,26px); }
+  .loading .term .u { color:#D6FF3D; }
+  .loading .cur { display:inline-block; width:.55em; height:1.05em; background:#D6FF3D;
+    margin-left:.12em; vertical-align:-.16em; animation:blink 1s steps(1) infinite; }
+  @keyframes blink { 50% { opacity:0; } }
+  .loading .bars { display:flex; gap:6px; height:40px; align-items:flex-end; }
+  .loading .bars i { width:8px; background:#D6FF3D; height:18%; animation:lp 1s ease-in-out infinite; }
+  @keyframes lp { 0%,100% { height:18%; opacity:.5; } 50% { height:100%; opacity:1; } }
+  .loading .msg { font-family:'Mono',monospace; color:#8b8b85; font-size:14px; }
 </style>
 </head>
 <body>
@@ -31,23 +44,35 @@
     <button type="submit">voir mon wrapped</button></form>
   <div class="err" id="err"></div>
 </div>
+<div class="loading" id="loading">
+  <div class="term">$ git wrapped <span class="u" id="luser"></span><span class="cur"></span></div>
+  <div class="bars" id="lbars"></div>
+  <div class="msg">récupération de tes commits publics…</div>
+</div>
 <div id="app"></div>
 <script src="./wrapped.js"></script>
 <script>
 const f = document.getElementById("f"), errEl = document.getElementById("err"),
-  landing = document.getElementById("landing"), app = document.getElementById("app");
+  landing = document.getElementById("landing"), app = document.getElementById("app"),
+  loading = document.getElementById("loading"), lbars = document.getElementById("lbars");
+for (let i = 0; i < 22; i++) { const b = document.createElement("i");
+  b.style.animationDelay = (-(Math.sin(i / 22 * Math.PI * 3) + 1) * 0.5).toFixed(2) + "s";
+  lbars.appendChild(b); }
 f.addEventListener("submit", async e => {
   e.preventDefault();
   const user = document.getElementById("u").value.trim();
-  errEl.textContent = "chargement…";
+  errEl.textContent = "";
+  document.getElementById("luser").textContent = "@" + user;
+  loading.classList.add("on");
   try {
     const r = await fetch("/api/wrapped?user=" + encodeURIComponent(user));
-    if (r.status === 404) { errEl.textContent = "pseudo introuvable."; return; }
-    if (!r.ok) { errEl.textContent = "réessaie plus tard."; return; }
+    if (r.status === 404) { loading.classList.remove("on"); errEl.textContent = "pseudo introuvable."; return; }
+    if (!r.ok) { loading.classList.remove("on"); errEl.textContent = "réessaie plus tard."; return; }
     const stats = await r.json();
+    loading.classList.remove("on");
     landing.style.display = "none";
     renderWrapped(app, stats);
-  } catch (_) { errEl.textContent = "réessaie plus tard."; }
+  } catch (_) { loading.classList.remove("on"); errEl.textContent = "réessaie plus tard."; }
 });
 </script>
 </body>
