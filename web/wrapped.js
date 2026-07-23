@@ -114,7 +114,8 @@ function recapSVG(fontCSS) {
   s += '<rect x="' + (PX + 16) + '" y="' + (pTop + 16) + '" width="' + pw + '" height="' + pH + '" fill="' + acc + '"/>';
   s += '<rect x="' + PX + '" y="' + pTop + '" width="' + pw + '" height="' + pH + '" fill="' + panel + '" stroke="' + ink + '" stroke-width="3"/>';
   let y = pTop + pPad + 40;
-  s += svgT(PX + pPad, y, acc, 34, "800", "GIT WRAPPED", true, 6);
+  s += svgT(PX + pPad, y, acc, 34, "800",
+    S.user ? ("@" + S.user).toUpperCase() : "GIT WRAPPED", true, 6);
   s += svgT(PX + pw - pPad, y, acc, 34, "800", String(S.year), true, 4, "end");
   s += '<line x1="' + (PX + pPad) + '" y1="' + (y + 34) + '" x2="' + (PX + pw - pPad) + '" y2="' + (y + 34) + '" stroke="' + line + '" stroke-width="2"/>';
   y += 92;
@@ -699,11 +700,10 @@ function slideArchetype() {
 function kfmt(n) { return n >= 1000 ? Math.round(n / 1000) + "k" : String(n); }
 function slideRecap() {
   const c = card(9);
-  const v = el("div", "viz"); v.appendChild(calendar()); c.appendChild(v);
   c.appendChild(el("div", "eyebrow", "// le récap"));
   const r = el("div", "receipt");
   const h = el("div", "rh");
-  h.appendChild(el("span", null, "git wrapped"));
+  h.appendChild(el("span", null, S.user ? "@" + S.user : "git wrapped"));
   h.appendChild(el("span", null, String(S.year)));
   r.appendChild(h);
   [["commits", fmt(S.total_commits)],
