@@ -4,7 +4,10 @@
     { "source": "/wrapped.js", "destination": "/web/wrapped.js" },
     { "source": "/wrapped.css", "destination": "/web/wrapped.css" },
     { "source": "/fonts.css", "destination": "/web/fonts.css" },
-    { "source": "/fonts/:f", "destination": "/web/fonts/:f" }
+    { "source": "/fonts/:f", "destination": "/web/fonts/:f" },
+    { "source": "/sw.js", "destination": "/web/sw.js" },
+    { "source": "/manifest.webmanifest", "destination": "/web/manifest.webmanifest" },
+    { "source": "/icons/:f", "destination": "/web/icons/:f" }
   ],
   "cleanUrls": true
 }

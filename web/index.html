@@ -4,6 +4,16 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Git Wrapped</title>
+<meta name="description" content="Ton année GitHub en story façon Spotify Wrapped, depuis un simple pseudo.">
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#050506">
+<link rel="icon" type="image/svg+xml" href="/icons/icon.svg">
+<link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32.png">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Git Wrapped">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="stylesheet" href="./fonts.css">
 <link rel="stylesheet" href="./wrapped.css">
 <style>
@@ -189,6 +199,9 @@ f.addEventListener("submit", async e => {
     renderWrapped(app, stats, backHome);
   } catch (_) { await settle(); loading.classList.remove("on"); errEl.textContent = "réessaie plus tard."; }
 });
+// PWA : enregistre le service worker (offline + installable)
+if ("serviceWorker" in navigator)
+  addEventListener("load", () => navigator.serviceWorker.register("/sw.js").catch(() => {}));
 </script>
 </body>
 </html>
