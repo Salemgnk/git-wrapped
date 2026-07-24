@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="fr"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Git Wrapped · Classement</title>
+<link rel="stylesheet" href="./fonts.css">
+<link rel="stylesheet" href="./classement.css">
+</head><body>
+<header class="lb-top">
+  <a class="lb-brand" href="/">← git wrapped</a>
+  <div class="lb-maj" id="maj"></div>
+</header>
+<main class="lb">
+  <h1 class="lb-title">Classement</h1>
+  <div class="lb-controls">
+    <div class="seg" id="tab"><button data-v="devs" class="on">Devs</button><button data-v="repos">Projets</button></div>
+    <div class="seg" id="win"><button data-v="week" class="on">Semaine</button><button data-v="year">Année</button></div>
+    <a class="lb-join" href="/api/auth/start">Rejoindre</a>
+  </div>
+  <ol class="lb-list" id="list"></ol>
+  <div class="lb-empty" id="empty" hidden></div>
+</main>
+<script src="./classement.js"></script>
+</body></html>
