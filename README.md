@@ -1,16 +1,24 @@
 # Git Wrapped
 
-Ton année GitHub transformée en story façon *Spotify Wrapped* : commits, plus
-longue série, rythme, langages, mot fétiche et ton **archétype de dev** — 10
-cartes à partager, export PNG inclus.
+Ton année GitHub en story façon *Spotify Wrapped* · Your GitHub year, wrapped like *Spotify Wrapped*.
 
-**→ Démo : [git-wrapped-teal.vercel.app](https://git-wrapped-teal.vercel.app)**
+**→ Démo / Live demo : [git-wrapped-teal.vercel.app](https://git-wrapped-teal.vercel.app)**
+
+[🇫🇷 Français](#-français) · [🇬🇧 English](#-english)
 
 ![La page d'accueil](docs/screenshots/landing.png)
 
 ![Aperçu des cartes](docs/screenshots/cards.png)
 
-## Fonctionnalités
+---
+
+## 🇫🇷 Français
+
+Ton année GitHub transformée en story façon *Spotify Wrapped* : commits, plus
+longue série, rythme, langages, mot fétiche et ton **archétype de dev** — 10
+cartes à partager, export PNG inclus.
+
+### Fonctionnalités
 
 - **10 cartes** animées : intro, commits, rythme + calendrier de contributions,
   série la plus longue, lignes ajoutées/supprimées, top projet, top langage,
@@ -26,13 +34,13 @@ cartes à partager, export PNG inclus.
   moteur de rendu (`web/wrapped.js` + `web/wrapped.css`) et le même contrat de
   stats ; seule la source de données change.
 
-## App web (pseudo GitHub)
+### App web (pseudo GitHub)
 
 L'app affiche le wrapped des **dépôts publics** d'un pseudo GitHub : on tape un
 login, un backend interroge l'API GitHub GraphQL et calcule les stats **à partir
 des commits publics uniquement** (aucune fuite d'activité privée).
 
-### Déploiement (Vercel)
+#### Déploiement (Vercel)
 
 1. Importer le repo dans Vercel (ou `vercel --prod`).
 2. Variable d'environnement **`GITHUB_TOKEN`** = un token GitHub en lecture seule
@@ -43,7 +51,7 @@ des commits publics uniquement** (aucune fuite d'activité privée).
 > Le token reste **côté serveur** (variable d'env Vercel) et n'est jamais exposé
 > au client. L'app ne montre que des données publiques.
 
-## Classement public
+### Classement public
 
 Un classement opt-in (2 onglets **Devs** / **Projets** × toggle **Semaine** / **Année**)
 alimenté par un cron. On rejoint via **OAuth GitHub** (identité seule, on n'ajoute que
@@ -59,7 +67,7 @@ chaque nuit et stocké dans Vercel KV ; la page `/classement` lit ce snapshot pr
    `KV_REST_API_TOKEN` sont injectés par l'intégration KV.
 4. Le cron (`vercel.json > crons`) recalcule le classement chaque nuit à 03:00.
 
-## CLI local (tes dépôts git)
+### CLI local (tes dépôts git)
 
 Aucune dépendance : Python 3 + git. Scanne tes dépôts locaux et génère un `.html`
 autonome (polices embarquées en base64, zéro ressource externe).
@@ -79,7 +87,7 @@ python git_wrapped.py ~/Documents/Perso ~/code \
 
 Ouvre ensuite le `.html` dans un navigateur et fais défiler.
 
-## Développement
+### Développement
 
 Zéro dépendance npm côté backend (Node ≥ 20, `fetch` natif, `node:test`).
 
@@ -88,7 +96,7 @@ python -m unittest discover -s tests -v   # CLI (Python, stdlib)
 npm test                                   # backend web (Node, node:test)
 ```
 
-## Structure
+### Structure
 
 ```
 git_wrapped.py        entrée CLI
@@ -99,10 +107,115 @@ web/                  index.html · wrapped.js · wrapped.css · fonts (story pa
 tests/ · test/        suites Python · Node
 ```
 
-## Projet frère & crédits
+### Projet frère & crédits
 
 **[My Claude Wrapped — Arcade Edition](https://github.com/HKafuiEPI/my_claude_wrapped)** par
 [@HKafuiEPI](https://github.com/HKafuiEPI) : le même esprit « Wrapped », mais pour ton année
 **Claude Code** (façon borne d'arcade rétro). Une **fusion** des deux est en cours — une CLI
 unifiée qui résume ton année de dev *code + pairing IA* en une seule page. Merci à lui pour
 l'idée et l'inspiration. 🕹️
+
+---
+
+## 🇬🇧 English
+
+Your GitHub year turned into a *Spotify Wrapped*–style story: commits, longest
+streak, rhythm, languages, favorite word and your **dev archetype** — 10
+shareable cards, PNG export included.
+
+### Features
+
+- **10 animated cards**: intro, commits, rhythm + contribution calendar,
+  longest streak, lines added/removed, top project, top language, favorite
+  commit word, dev archetype, recap.
+- **Quizzes**: guess your repo and your #1 word before the reveal.
+- **Auto-play** (~5 s/card) with play/pause, generated **chiptune music** (or a
+  dropped-in `web/music.mp3`), keyboard / tap / swipe navigation.
+- **Faithful PNG export** of every card (native SVG, embedded fonts) + native
+  share.
+- **Deterministic archetype**: 6 time-slots × 9 crafts (the app labels are in
+  French — e.g. « Créature Nocturne Pompier », « Diurne Bâtisseur »).
+- **Two front-ends, one story**: the Python CLI and the web app share the same
+  rendering engine (`web/wrapped.js` + `web/wrapped.css`) and the same stats
+  contract; only the data source changes.
+
+### Web app (GitHub username)
+
+The app shows the wrapped of a GitHub username's **public repos**: you type a
+login, a backend queries the GitHub GraphQL API and computes stats **from public
+commits only** (no private-activity leak).
+
+#### Deployment (Vercel)
+
+1. Import the repo into Vercel (or `vercel --prod`).
+2. Environment variable **`GITHUB_TOKEN`** = a read-only GitHub token
+   (`read:user` / `public_repo` scope is enough; used to read public data via GraphQL).
+3. Deploy. The home serves `web/index.html`; the API is
+   `GET /api/wrapped?user=<login>&year=<YYYY>` (default year = current year).
+
+> The token stays **server-side** (Vercel env var) and is never exposed to the
+> client. The app only shows public data.
+
+### Public leaderboard
+
+An opt-in leaderboard (2 tabs **Devs** / **Projects** × **Week** / **Year** toggle)
+fed by a cron. You join via **GitHub OAuth** (identity only, you only add
+yourself). A composite score (capped commits + active days + lines) is recomputed
+nightly and stored in Vercel KV; the `/classement` page reads this precomputed snapshot.
+
+**Setup:**
+1. Create a **GitHub OAuth App** (Settings → Developer settings); Authorization callback
+   URL = `https://<domain>/api/auth/callback`.
+2. Enable **Vercel KV** (Storage) on the project.
+3. Vercel env vars: `GITHUB_OAUTH_CLIENT_ID`, `GITHUB_OAUTH_CLIENT_SECRET`,
+   `SESSION_SECRET` (random), `CRON_SECRET` (random). `KV_REST_API_URL` /
+   `KV_REST_API_TOKEN` are injected by the KV integration.
+4. The cron (`vercel.json > crons`) recomputes the leaderboard every night at 03:00.
+
+### Local CLI (your git repos)
+
+No dependencies: Python 3 + git. Scans your local repos and generates a
+self-contained `.html` (base64-embedded fonts, zero external resources).
+
+```bash
+python git_wrapped.py ~/Documents/Perso ~/code \
+    --year 2026 \
+    --author your.email@example.com \
+    -o wrapped.html
+```
+
+- `roots`: one or more folders scanned recursively (every git repo underneath is
+  included).
+- `--year`: covered year (default: current year).
+- `--author`: filtered git email (default: `git config user.email`).
+- `-o`: output file (default: `git-wrapped-<year>.html`).
+
+Then open the `.html` in a browser and scroll.
+
+### Development
+
+Zero npm dependency on the backend (Node ≥ 20, native `fetch`, `node:test`).
+
+```bash
+python -m unittest discover -s tests -v   # CLI (Python, stdlib)
+npm test                                   # web backend (Node, node:test)
+```
+
+### Structure
+
+```
+git_wrapped.py        CLI entry
+gitwrapped/           discover · collect · analyze · render (Python)
+lib/                  github-client · github-to-stats (web backend)
+api/wrapped.js        serverless function (Vercel)
+web/                  index.html · wrapped.js · wrapped.css · fonts (shared story)
+tests/ · test/        Python · Node suites
+```
+
+### Sister project & credits
+
+**[My Claude Wrapped — Arcade Edition](https://github.com/HKafuiEPI/my_claude_wrapped)** by
+[@HKafuiEPI](https://github.com/HKafuiEPI): the same "Wrapped" spirit, but for your
+**Claude Code** year (retro-arcade style). A **fusion** of the two is in progress — a unified
+CLI summarizing your dev year *code + AI pairing* in a single page. Thanks to him for the
+idea and inspiration. 🕹️
