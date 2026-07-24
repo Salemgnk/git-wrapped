@@ -39,6 +39,9 @@
   .also b { color:var(--ink); font-weight:700; }
   .also a { color:var(--acc); text-decoration:none; }
   .also a:hover { text-decoration:underline; }
+  .also code { font-family:var(--mono); color:var(--ink); background:var(--panel2);
+    border:1.5px solid var(--line); padding:3px 9px; font-size:12px; white-space:nowrap;
+    user-select:all; }
   .topbar, .botbar { display:flex; align-items:center; justify-content:space-between;
     gap:16px; padding:22px clamp(20px,5vw,64px); font-family:var(--mono); font-size:13px;
     font-weight:700; letter-spacing:.08em; text-transform:uppercase; }
@@ -187,9 +190,10 @@
 
   <aside class="also">
     <span class="t">◆ aussi</span>
-    <span><b>Claude Wrapped</b> — ton année <b>Claude Code</b> en néo-brut, en CLI.</span>
-    <a href="https://github.com/Salemgnk/claude-wrapped" target="_blank" rel="noopener">ma version ↗</a>
-    <a href="https://github.com/HKafuiEPI/my_claude_wrapped" target="_blank" rel="noopener">l'original de @HKafuiEPI ↗</a>
+    <span><b>Claude Wrapped</b> — ton année <b>Claude Code</b> en néo-brut, en CLI :</span>
+    <code>pip install wrapped-claude</code>
+    <a href="https://github.com/Salemgnk/claude-wrapped" target="_blank" rel="noopener">repo ↗</a>
+    <a href="https://github.com/HKafuiEPI/my_claude_wrapped" target="_blank" rel="noopener">original @HKafuiEPI ↗</a>
   </aside>
 
   <footer class="botbar">
