@@ -98,3 +98,11 @@ api/wrapped.js        fonction serverless (Vercel)
 web/                  index.html · wrapped.js · wrapped.css · fonts (story partagée)
 tests/ · test/        suites Python · Node
 ```
+
+## Projet frère & crédits
+
+**[My Claude Wrapped — Arcade Edition](https://github.com/HKafuiEPI/my_claude_wrapped)** par
+[@HKafuiEPI](https://github.com/HKafuiEPI) : le même esprit « Wrapped », mais pour ton année
+**Claude Code** (façon borne d'arcade rétro). Une **fusion** des deux est en cours — une CLI
+unifiée qui résume ton année de dev *code + pairing IA* en une seule page. Merci à lui pour
+l'idée et l'inspiration. 🕹️
