@@ -31,7 +31,14 @@
     margin-left:.05em; vertical-align:-.06em; animation:blink 1s steps(1) infinite; }
 
   /* ---- structure plein écran ---- */
-  .landing { min-height:100dvh; display:grid; grid-template-rows:auto 1fr auto; }
+  .landing { min-height:100dvh; display:grid; grid-template-rows:auto 1fr auto auto; }
+  .also { display:flex; align-items:center; flex-wrap:wrap; gap:8px 16px;
+    padding:14px clamp(20px,5vw,64px); border-top:2px solid var(--line);
+    font-family:var(--mono); font-size:13px; letter-spacing:.03em; color:var(--dim); }
+  .also .t { color:var(--acc); font-weight:700; text-transform:uppercase; letter-spacing:.08em; }
+  .also b { color:var(--ink); font-weight:700; }
+  .also a { color:var(--acc); text-decoration:none; }
+  .also a:hover { text-decoration:underline; }
   .topbar, .botbar { display:flex; align-items:center; justify-content:space-between;
     gap:16px; padding:22px clamp(20px,5vw,64px); font-family:var(--mono); font-size:13px;
     font-weight:700; letter-spacing:.08em; text-transform:uppercase; }
@@ -177,6 +184,13 @@
       </div>
     </div>
   </main>
+
+  <aside class="also">
+    <span class="t">◆ aussi</span>
+    <span><b>Claude Wrapped</b> — ton année <b>Claude Code</b> en néo-brut, en CLI.</span>
+    <a href="https://github.com/Salemgnk/claude-wrapped" target="_blank" rel="noopener">ma version ↗</a>
+    <a href="https://github.com/HKafuiEPI/my_claude_wrapped" target="_blank" rel="noopener">l'original de @HKafuiEPI ↗</a>
+  </aside>
 
   <footer class="botbar">
     <span>// spotify wrapped, mais pour ton git</span>
