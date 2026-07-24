@@ -137,8 +137,11 @@
 <div class="landing" id="landing">
   <header class="topbar">
     <div class="brand"><span class="dot">●</span> git wrapped</div>
-    <a class="repo" href="https://github.com/Salemgnk/git-wrapped" target="_blank" rel="noopener">
-      <span class="gh">‹/›</span> code source ↗</a>
+    <nav style="display:flex;gap:10px;align-items:center">
+      <a class="repo" href="/classement"><span class="gh">▲</span> classement</a>
+      <a class="repo" href="https://github.com/Salemgnk/git-wrapped" target="_blank" rel="noopener">
+        <span class="gh">‹/›</span> code source ↗</a>
+    </nav>
   </header>
 
   <main class="hero">
@@ -220,6 +223,12 @@ f.addEventListener("submit", async e => {
     renderWrapped(app, stats, backHome);
   } catch (_) { await settle(); loading.classList.remove("on"); errEl.textContent = "réessaie plus tard."; }
 });
+// deep-link : /?u=<login> pré-remplit et lance le wrapped (depuis le classement)
+const uParam = new URLSearchParams(location.search).get("u");
+if (uParam && /^[A-Za-z0-9-]{1,39}$/.test(uParam)) {
+  document.getElementById("u").value = uParam;
+  f.requestSubmit();
+}
 // PWA : enregistre le service worker (offline + installable)
 if ("serviceWorker" in navigator)
   addEventListener("load", () => navigator.serviceWorker.register("/sw.js").catch(() => {}));

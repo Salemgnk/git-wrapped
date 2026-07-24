@@ -7,7 +7,11 @@
     { "source": "/fonts/:f", "destination": "/web/fonts/:f" },
     { "source": "/sw.js", "destination": "/web/sw.js" },
     { "source": "/manifest.webmanifest", "destination": "/web/manifest.webmanifest" },
-    { "source": "/icons/:f", "destination": "/web/icons/:f" }
+    { "source": "/icons/:f", "destination": "/web/icons/:f" },
+    { "source": "/classement", "destination": "/web/classement.html" },
+    { "source": "/classement.js", "destination": "/web/classement.js" },
+    { "source": "/classement.css", "destination": "/web/classement.css" }
   ],
+  "crons": [{ "path": "/api/cron/refresh", "schedule": "0 3 * * *" }],
   "cleanUrls": true
 }

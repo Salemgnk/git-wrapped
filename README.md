@@ -43,6 +43,22 @@ des commits publics uniquement** (aucune fuite d'activité privée).
 > Le token reste **côté serveur** (variable d'env Vercel) et n'est jamais exposé
 > au client. L'app ne montre que des données publiques.
 
+## Classement public
+
+Un classement opt-in (2 onglets **Devs** / **Projets** × toggle **Semaine** / **Année**)
+alimenté par un cron. On rejoint via **OAuth GitHub** (identité seule, on n'ajoute que
+soi-même). Un score composite (commits plafonnés + jours actifs + lignes) est recalculé
+chaque nuit et stocké dans Vercel KV ; la page `/classement` lit ce snapshot pré-calculé.
+
+**Mise en place :**
+1. Créer une **GitHub OAuth App** (Settings → Developer settings) ; Authorization callback
+   URL = `https://<domaine>/api/auth/callback`.
+2. Activer **Vercel KV** (Storage) sur le projet.
+3. Env vars Vercel : `GITHUB_OAUTH_CLIENT_ID`, `GITHUB_OAUTH_CLIENT_SECRET`,
+   `SESSION_SECRET` (aléatoire), `CRON_SECRET` (aléatoire). `KV_REST_API_URL` /
+   `KV_REST_API_TOKEN` sont injectés par l'intégration KV.
+4. Le cron (`vercel.json > crons`) recalcule le classement chaque nuit à 03:00.
+
 ## CLI local (tes dépôts git)
 
 Aucune dépendance : Python 3 + git. Scanne tes dépôts locaux et génère un `.html`
