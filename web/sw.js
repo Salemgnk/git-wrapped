@@ -1,6 +1,6 @@
 // Service worker Git Wrapped — cache du shell (offline / installable).
 // Bump CACHE à chaque changement d'assets pour invalider l'ancien cache.
-const CACHE = "gw-v7";
+const CACHE = "gw-v8";
 const ASSETS = [
   "/", "/wrapped.js", "/wrapped.css", "/fonts.css",
   "/fonts/SpaceGrotesk-500.woff2", "/fonts/SpaceGrotesk-700.woff2",
