@@ -7,6 +7,7 @@ import path from "node:path";
 test("server: sert la landing, l'API leaderboard (KV fichier) et 404 sur route inconnue", async () => {
   process.env.KV_DIR = fs.mkdtempSync(path.join(os.tmpdir(), "gw-srv-"));
   delete process.env.KV_REST_API_URL; // force le fallback fichier local
+  delete process.env.UPSTASH_REDIS_REST_URL;
   const { createServer } = await import("../server.js");
   const server = createServer();
   await new Promise((r) => server.listen(0, r));
