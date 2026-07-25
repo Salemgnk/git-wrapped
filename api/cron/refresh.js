@@ -2,11 +2,9 @@ import { kv } from "../../lib/kv.js";
 import { fetchWrapped as realFetchWrapped } from "../../lib/github-client.js";
 import { buildSnapshot } from "../../lib/rank.js";
 
-export async function handler(req, res, opts = {}) {
-  const secret = opts.cronSecret ?? process.env.CRON_SECRET;
-  if (!secret || (req.headers?.authorization || "") !== "Bearer " + secret)
-    return res.status(401).json({ error: "unauthorized" });
-
+// Cœur réutilisable : recalcule le snapshot. Appelé par le handler HTTP (avec
+// auth) ET par le cron intégré du serveur self-host (sans HTTP).
+export async function refresh(opts = {}) {
   const store = opts.kv || kv();
   const fetchWrapped = opts.fetchWrapped || realFetchWrapped;
   const token = opts.token ?? process.env.GITHUB_TOKEN;
@@ -34,15 +32,23 @@ export async function handler(req, res, opts = {}) {
         if (n >= 5) await store.srem("participants", login);
         else { await store.set("failcount:" + login, n); participants.push({ login, avatar: null, commits: [] }); }
       } else {
-        degraded = true; // rate limit / réseau : on ne veut pas écraser avec des données partielles
+        degraded = true; // rate limit / réseau : ne pas écraser avec des données partielles
       }
     }
   }
 
-  if (degraded) return res.status(200).json({ skipped: true, reason: "degraded" });
+  if (degraded) return { skipped: true, reason: "degraded" };
 
   const snapshot = buildSnapshot(participants, now, year);
   await store.set("snapshot", snapshot);
-  return res.status(200).json({ ok: true, count: participants.length, updatedAt: snapshot.updatedAt });
+  return { ok: true, count: participants.length, updatedAt: snapshot.updatedAt };
 }
+
+export async function handler(req, res, opts = {}) {
+  const secret = opts.cronSecret ?? process.env.CRON_SECRET;
+  if (!secret || (req.headers?.authorization || "") !== "Bearer " + secret)
+    return res.status(401).json({ error: "unauthorized" });
+  return res.status(200).json(await refresh(opts));
+}
+
 export default handler;

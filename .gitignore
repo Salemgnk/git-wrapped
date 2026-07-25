@@ -8,3 +8,6 @@ git-wrapped-*.html
 docs/superpowers/
 .vercel
 .env*
+
+# Store local du classement (self-host)
+.data/

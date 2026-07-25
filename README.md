@@ -51,6 +51,24 @@ des commits publics uniquement** (aucune fuite d'activité privée).
 > Le token reste **côté serveur** (variable d'env Vercel) et n'est jamais exposé
 > au client. L'app ne montre que des données publiques.
 
+#### Self-host (sans Vercel)
+
+Pas besoin de Vercel : un serveur Node **zéro dépendance** sert l'app et l'API, et
+relance le classement tout seul.
+
+```bash
+GITHUB_TOKEN=ghp_xxx node server.js        # -> http://localhost:3000
+PORT=8080 node server.js --no-cron         # port custom, cron désactivé
+```
+
+- **Store** : sans `KV_REST_API_URL`, les données du classement sont écrites dans
+  `.data/kv.json` (aucun service cloud requis). Vercel KV / Upstash reste supporté.
+- **Cron intégré** : recalcul toutes les 6 h (`REFRESH_HOURS` pour changer). L'endpoint
+  `/api/cron/refresh` reste dispo pour un cron externe.
+- **Classement** : marche pareil ; il te faut juste une **GitHub OAuth App** avec le
+  callback `http://<ton-hôte>/api/auth/callback` et les env vars `GITHUB_OAUTH_CLIENT_ID`,
+  `GITHUB_OAUTH_CLIENT_SECRET`, `SESSION_SECRET`, `CRON_SECRET`.
+
 ### Classement public
 
 Un classement opt-in (2 onglets **Devs** / **Projets** × toggle **Semaine** / **Année**)
@@ -155,6 +173,24 @@ commits only** (no private-activity leak).
 
 > The token stays **server-side** (Vercel env var) and is never exposed to the
 > client. The app only shows public data.
+
+#### Self-host (no Vercel)
+
+No Vercel needed: a **zero-dependency** Node server serves the app and the API, and
+refreshes the leaderboard on its own.
+
+```bash
+GITHUB_TOKEN=ghp_xxx node server.js        # -> http://localhost:3000
+PORT=8080 node server.js --no-cron         # custom port, cron off
+```
+
+- **Store**: without `KV_REST_API_URL`, leaderboard data is written to `.data/kv.json`
+  (no cloud service required). Vercel KV / Upstash still supported.
+- **Built-in cron**: recompute every 6h (`REFRESH_HOURS` to change). The
+  `/api/cron/refresh` endpoint remains available for an external cron.
+- **Leaderboard**: works the same; you just need a **GitHub OAuth App** with callback
+  `http://<your-host>/api/auth/callback` and env vars `GITHUB_OAUTH_CLIENT_ID`,
+  `GITHUB_OAUTH_CLIENT_SECRET`, `SESSION_SECRET`, `CRON_SECRET`.
 
 ### Public leaderboard
 
