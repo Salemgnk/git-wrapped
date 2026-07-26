@@ -1,0 +1,24 @@
+name: Refresh leaderboard
+
+# Vercel Hobby limite le cron natif à 1×/jour. Ce workflow tape l'endpoint de
+# recalcul toutes les 30 min (l'endpoint est protégé par CRON_SECRET).
+# NB : les crons GitHub Actions peuvent être décalés de quelques minutes.
+on:
+  schedule:
+    - cron: "*/30 * * * *"
+  workflow_dispatch: {}
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping cron endpoint
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          code=$(curl -sS -o /tmp/body -w "%{http_code}" -X POST \
+            "https://git-wrapped-teal.vercel.app/api/cron/refresh" \
+            -H "Authorization: Bearer $CRON_SECRET")
+          echo "HTTP $code"
+          cat /tmp/body; echo
+          test "$code" = "200"
