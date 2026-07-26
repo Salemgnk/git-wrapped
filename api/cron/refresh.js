@@ -23,7 +23,10 @@ export async function refresh(opts = {}) {
       const commits = (data.commits || []).map((c) => ({
         repo: c.repo, owner: ownerByRepo.get(c.repo) || login,
         committedDate: c.committedDate, additions: c.additions, deletions: c.deletions,
-      }));
+      }))
+        // Le classement ne compte que les repos que le participant possède : on écarte
+        // les repos d'orga/tiers (owner ≠ login), côté classement uniquement.
+        .filter((c) => c.owner.toLowerCase() === login.toLowerCase());
       participants.push({ login, avatar: data.avatar || null, commits });
       await store.set("failcount:" + login, 0);
     } catch (e) {

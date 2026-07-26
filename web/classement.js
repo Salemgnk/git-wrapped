@@ -25,15 +25,22 @@ function render() {
   }
   emptyEl.hidden = true;
   const rows = snap[tab][win] || [];
+  const linesCap = tab === "devs" ? 5000 : 20000;
   listEl.innerHTML = rows.map((r, i) => {
     const name = tab === "devs"
       ? `<a href="${esc(r.wrappedUrl)}">@${esc(r.login)}</a>`
       : `${esc(r.repo)} <span class="dt">· ${esc(r.owner)}</span>`;
     const av = tab === "devs" && r.avatar ? `<img src="${esc(r.avatar)}" alt="">` : "";
     const d = r.detail;
+    // Ventilation exacte du score : lignes ÷ 100, jours × 10, le reste = commits.
+    const daysPts = d.joursActifs * 10;
+    const linesPts = Math.floor(d.lignes / 100);
+    const commitsPts = r.score - daysPts - linesPts;
+    const capped = d.lignes >= linesCap ? ' <span class="cap">plafond</span>' : "";
     return `<li class="row${i < 3 ? " top" : ""}">
       <span class="rk">${String(i + 1).padStart(2, "0")}</span>${av}
-      <span class="nm">${name}<div class="dt">${d.commits} commits · ${d.joursActifs} j · ${d.lignes} lignes</div></span>
+      <span class="nm">${name}<div class="dt">${d.commits} commits · ${d.joursActifs} j · ${d.lignes} lignes${capped}</div>
+      <div class="brk">${commitsPts} <i>commits</i> + ${daysPts} <i>jours</i> + <b>${linesPts} lignes</b></div></span>
       <span class="sc">${r.score}</span></li>`;
   }).join("");
 }
