@@ -12,6 +12,6 @@
     { "source": "/classement.js", "destination": "/web/classement.js" },
     { "source": "/classement.css", "destination": "/web/classement.css" }
   ],
-  "crons": [{ "path": "/api/cron/refresh", "schedule": "*/30 * * * *" }],
+  "crons": [{ "path": "/api/cron/refresh", "schedule": "0 3 * * *" }],
   "cleanUrls": true
 }
