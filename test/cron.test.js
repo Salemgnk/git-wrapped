@@ -39,6 +39,8 @@ test("cron: exclut les repos d'orga (owner != login)", async () => {
     reposByCommits: [{ name: "app", owner: "alice" }, { name: "Marketplace", owner: "SomeOrg" }],
     commits: [
       { repo: "app", committedDate: "2026-06-14T10:00:00Z", additions: 5, deletions: 0 },
+      { repo: "app", committedDate: "2026-06-13T10:00:00Z", additions: 5, deletions: 0 },
+      { repo: "app", committedDate: "2026-06-12T10:00:00Z", additions: 5, deletions: 0 },
       { repo: "Marketplace", committedDate: "2026-06-14T10:00:00Z", additions: 9000, deletions: 0 },
     ] });
   const res = mockRes();

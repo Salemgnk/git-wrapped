@@ -26,6 +26,17 @@ test("buildSnapshot: classe devs et repos, semaine et année", () => {
   assert.ok(s.updatedAt);
 });
 
+test("buildSnapshot: un repo sous le seuil de commits n'apparaît pas dans Projets", () => {
+  const participants = [{ login: "alice", avatar: null, commits: [
+    c("2026-06-14", 5, "app", "alice"), c("2026-06-13", 5, "app", "alice"), c("2026-06-12", 5, "app", "alice"), // 3 commits -> OK
+    c("2026-06-14", 5, "readme", "alice"), // 1 seul commit -> écarté
+  ] }];
+  const s = buildSnapshot(participants, NOW, 2026);
+  const repos = s.repos.year.map((r) => r.repo);
+  assert.ok(repos.includes("app"));
+  assert.ok(!repos.includes("readme"));
+});
+
 test("buildSnapshot: participant sans commits -> score 0 en année", () => {
   const s = buildSnapshot([{ login: "empty", avatar: null, commits: [] }], NOW, 2026);
   assert.equal(s.devs.year[0].score, 0);
