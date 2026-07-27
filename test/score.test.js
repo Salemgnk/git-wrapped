@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { filterWindow, devScore, repoScore, REPO_COMMIT_CAP } from "../lib/score.js";
+import { filterWindow, devScore, repoScore } from "../lib/score.js";
 
 const NOW = Date.UTC(2026, 5, 15, 12); // 2026-06-15
 function c(date, add = 1, del = 0, repo = "a", owner = "me") {
@@ -15,16 +15,16 @@ test("filterWindow: exclut commits vides et hors fenêtre", () => {
   assert.equal(year.length, 2);                 // 2026-06-14 + 2026-01-01 (vide et 2025 exclus)
 });
 
-test("devScore: plafond par repo, jours actifs, lignes", () => {
+test("devScore: commits bruts (pas de plafond), jours actifs, lignes plafonnées à 5000", () => {
   const commits = [];
-  for (let i = 0; i < 60; i++) commits.push(c("2026-06-10", 10, 0, "big")); // 60 > cap 50
+  for (let i = 0; i < 60; i++) commits.push(c("2026-06-10", 10, 0, "big")); // pas de plafond
   commits.push(c("2026-06-11", 100, 100, "other"));
   const { score, detail } = devScore(commits);
-  // commits' = min(60,50) + 1 = 51 ; jours = 2 ; lignes = min(60*10 + 200, 5000)=800
+  // commits = 61 ; jours = 2 ; lignes = min(60*10 + 200, 5000) = 800
+  assert.equal(detail.commits, 61);
   assert.equal(detail.joursActifs, 2);
   assert.equal(detail.lignes, 800);
-  assert.equal(score, 51 + 2 * 10 + Math.floor(800 / 100)); // 51 + 20 + 8 = 79
-  assert.equal(REPO_COMMIT_CAP, 50);
+  assert.equal(score, 61 + 2 * 10 + Math.floor(800 / 100)); // 61 + 20 + 8 = 89
 });
 
 test("repoScore: pas de plafond commits, lignes plafonnées à 20000", () => {
