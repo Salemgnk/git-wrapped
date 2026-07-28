@@ -5,7 +5,9 @@ import { refresh } from "./cron/refresh.js";
 // pour qu'un nouvel inscrit se voie sans attendre le cron). Protégé par un
 // cooldown partagé (KV) : le 1er clic recalcule, les suivants sont temporisés,
 // ce qui évite de marteler l'API GitHub.
-const COOLDOWN_MS = 60_000;
+// Plus long qu'un recalcul complet (qui grossit avec le nombre de participants),
+// pour éviter des refresh qui se chevauchent et pilonnent l'API GitHub.
+const COOLDOWN_MS = 120_000;
 
 export async function handler(req, res, opts = {}) {
   const store = opts.kv || kv();

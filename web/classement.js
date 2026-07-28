@@ -61,7 +61,7 @@ const refreshBtn = document.getElementById("refresh");
 refreshBtn.addEventListener("click", async () => {
   refreshBtn.disabled = true;
   const label = refreshBtn.textContent;
-  refreshBtn.textContent = "Actualisation…";
+  refreshBtn.textContent = "Actualisation… (~1 min)";
   try {
     const res = await fetch("/api/refresh", { method: "POST" }).then((r) => r.json());
     await loadBoard();
