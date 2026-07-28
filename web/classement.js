@@ -31,14 +31,11 @@ function render() {
       : `${esc(r.repo)} <span class="dt">· ${esc(r.owner)}</span>`;
     const av = tab === "devs" && r.avatar ? `<img src="${esc(r.avatar)}" alt="">` : "";
     const d = r.detail;
-    // Ventilation exacte du score : lignes ÷ 100, jours × 10, le reste = commits.
-    const daysPts = d.joursActifs * 10;
-    const linesPts = Math.floor(d.lignes / 100);
-    const commitsPts = r.score - daysPts - linesPts;
+    // Détail du score, opérations visibles : commits + jours×10 + lignes÷100.
     return `<li class="row${i < 3 ? " top" : ""}">
       <span class="rk">${String(i + 1).padStart(2, "0")}</span>${av}
       <span class="nm">${name}<div class="dt">${d.commits} commits · ${d.joursActifs} j · ${d.lignes} lignes</div>
-      <div class="brk">${commitsPts} <i>commits</i> + ${daysPts} <i>jours</i> + <b>${linesPts} lignes</b></div></span>
+      <div class="brk">${d.commits} + ${d.joursActifs}<i>j</i>×10 + ${d.lignes}<i>l</i>÷100 = <b>${r.score}</b></div></span>
       <span class="sc">${r.score}</span></li>`;
   }).join("");
 }
@@ -55,28 +52,25 @@ function loadBoard() {
 }
 loadBoard().catch(() => { emptyEl.hidden = false; emptyEl.textContent = "réessaie plus tard."; });
 
-// Bouton « Actualiser » : recalcule le classement (surtout utile juste après
-// s'être inscrit) puis recharge. Le serveur temporise si c'est trop rapproché.
+// Bouton « Actualiser » : recalcule le classement puis recharge. Le libellé du
+// bouton ne change PAS (pas de décalage de mise en page) — tout le statut passe
+// dans la ligne « maj » en haut à droite. Connecté = recalcul de soi (rapide) ;
+// anonyme = recalcul complet (plus long), géré côté serveur.
 const refreshBtn = document.getElementById("refresh");
 refreshBtn.addEventListener("click", async () => {
+  if (refreshBtn.disabled) return;
   refreshBtn.disabled = true;
-  const label = refreshBtn.textContent;
-  refreshBtn.textContent = "Actualisation… (~1 min)";
+  refreshBtn.classList.add("loading");
+  majEl.textContent = "actualisation en cours…";
   try {
     const res = await fetch("/api/refresh", { method: "POST" }).then((r) => r.json());
-    await loadBoard();
-    if (res.throttled) {
-      refreshBtn.textContent = "encore " + res.retryInSec + " s";
-    } else {
-      refreshBtn.textContent = "✓ à jour";
-      refreshBtn.classList.add("done");
-    }
+    await loadBoard(); // re-render + réécrit majEl avec l'heure
+    if (res.throttled) majEl.textContent = "déjà à jour · réessaie dans " + res.retryInSec + " s";
+    else majEl.textContent = "✓ classement à jour";
   } catch {
-    refreshBtn.textContent = "échec, réessaie";
-  }
-  setTimeout(() => {
-    refreshBtn.textContent = label;
-    refreshBtn.classList.remove("done");
+    majEl.textContent = "échec de l'actualisation — réessaie";
+  } finally {
+    refreshBtn.classList.remove("loading");
     refreshBtn.disabled = false;
-  }, 2500);
+  }
 });

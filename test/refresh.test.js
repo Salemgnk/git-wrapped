@@ -24,7 +24,8 @@ test("refresh public: 1er appel recalcule, 2e temporisé (cooldown)", async () =
       { repo: "app", committedDate: "2026-06-13T10:00:00Z", additions: 5, deletions: 0 },
       { repo: "app", committedDate: "2026-06-12T10:00:00Z", additions: 5, deletions: 0 },
     ] });
-  const opts = { kv, fetchWrapped: fakeFetchWrapped, now: Date.UTC(2026, 5, 15), year: 2026, cooldownMs: 60000 };
+  // login: null -> chemin anonyme (refresh complet)
+  const opts = { kv, login: null, fetchWrapped: fakeFetchWrapped, now: Date.UTC(2026, 5, 15), year: 2026, cooldownMs: 60000 };
 
   const r1 = mockRes();
   await handler({}, r1, opts);
@@ -35,4 +36,25 @@ test("refresh public: 1er appel recalcule, 2e temporisé (cooldown)", async () =
   await handler({}, r2, opts);                // même now -> dans le cooldown
   assert.equal(r2.body.throttled, true);
   assert.ok(r2.body.retryInSec > 0);
+});
+
+test("refresh connecté: ne recalcule que soi et se voit dans le snapshot", async () => {
+  const kv = memKv({ participants: ["alice", "bob"] });
+  let fetched = [];
+  const fakeFetchWrapped = async (login) => {
+    fetched.push(login);
+    return { avatar: login + ".png", reposByCommits: [{ name: "app", owner: login }],
+      commits: [
+        { repo: "app", committedDate: "2026-06-14T10:00:00Z", additions: 5, deletions: 0 },
+        { repo: "app", committedDate: "2026-06-13T10:00:00Z", additions: 5, deletions: 0 },
+        { repo: "app", committedDate: "2026-06-12T10:00:00Z", additions: 5, deletions: 0 },
+      ] };
+  };
+  const opts = { kv, login: "bob", fetchWrapped: fakeFetchWrapped, now: Date.UTC(2026, 5, 15), year: 2026 };
+  const res = mockRes();
+  await handler({}, res, opts);
+  assert.equal(res.body.ok, true);
+  assert.deepEqual(fetched, ["bob"]);                       // seul bob refetché
+  const devs = kv.m.get("snapshot").devs.year.map((d) => d.login);
+  assert.ok(devs.includes("bob"));                          // bob apparaît
 });
