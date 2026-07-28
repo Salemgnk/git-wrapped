@@ -27,11 +27,11 @@ test("devScore: commits bruts (pas de plafond), jours actifs, lignes plafonnées
   assert.equal(score, 61 + 2 * 10 + Math.floor(800 / 100)); // 61 + 20 + 8 = 89
 });
 
-test("repoScore: pas de plafond commits, lignes plafonnées à 20000", () => {
+test("repoScore: aucun plafond (commits ni lignes)", () => {
   const commits = [];
   for (let i = 0; i < 100; i++) commits.push(c("2026-06-10", 300, 0, "r"));
   const { score, detail } = repoScore(commits);
   assert.equal(detail.commits, 100);            // pas de plafond
-  assert.equal(detail.lignes, 20000);           // min(30000, 20000)
-  assert.equal(score, 100 + 1 * 10 + 200);      // 100 + 10 + floor(20000/100)
+  assert.equal(detail.lignes, 30000);           // 100 * 300, non plafonné
+  assert.equal(score, 100 + 1 * 10 + 300);      // 100 + 10 + floor(30000/100)
 });

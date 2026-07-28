@@ -26,6 +26,7 @@ const TYPES = {
 const API = {
   "/api/wrapped": () => import("./api/wrapped.js"),
   "/api/leaderboard": () => import("./api/leaderboard.js"),
+  "/api/refresh": () => import("./api/refresh.js"),
   "/api/auth/start": () => import("./api/auth/start.js"),
   "/api/auth/callback": () => import("./api/auth/callback.js"),
   "/api/leave": () => import("./api/leave.js"),

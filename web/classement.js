@@ -25,7 +25,6 @@ function render() {
   }
   emptyEl.hidden = true;
   const rows = snap[tab][win] || [];
-  const linesCap = tab === "devs" ? 5000 : 20000;
   listEl.innerHTML = rows.map((r, i) => {
     const name = tab === "devs"
       ? `<a href="${esc(r.wrappedUrl)}">@${esc(r.login)}</a>`
@@ -36,20 +35,48 @@ function render() {
     const daysPts = d.joursActifs * 10;
     const linesPts = Math.floor(d.lignes / 100);
     const commitsPts = r.score - daysPts - linesPts;
-    const capped = d.lignes >= linesCap ? ' <span class="cap">plafond</span>' : "";
     return `<li class="row${i < 3 ? " top" : ""}">
       <span class="rk">${String(i + 1).padStart(2, "0")}</span>${av}
-      <span class="nm">${name}<div class="dt">${d.commits} commits · ${d.joursActifs} j · ${d.lignes} lignes${capped}</div>
+      <span class="nm">${name}<div class="dt">${d.commits} commits · ${d.joursActifs} j · ${d.lignes} lignes</div>
       <div class="brk">${commitsPts} <i>commits</i> + ${daysPts} <i>jours</i> + <b>${linesPts} lignes</b></div></span>
       <span class="sc">${r.score}</span></li>`;
   }).join("");
 }
 
-fetch("/api/leaderboard").then((r) => r.json()).then((s) => {
-  snap = s;
-  if (s.updatedAt) {
-    const h = Math.round((Date.now() - Date.parse(s.updatedAt)) / 3600000);
-    majEl.textContent = "maj il y a " + (h < 1 ? "moins d'1 h" : h + " h");
+function loadBoard() {
+  return fetch("/api/leaderboard?t=" + Date.now()).then((r) => r.json()).then((s) => {
+    snap = s;
+    if (s.updatedAt) {
+      const h = Math.round((Date.now() - Date.parse(s.updatedAt)) / 3600000);
+      majEl.textContent = "maj il y a " + (h < 1 ? "moins d'1 h" : h + " h");
+    }
+    render();
+  });
+}
+loadBoard().catch(() => { emptyEl.hidden = false; emptyEl.textContent = "réessaie plus tard."; });
+
+// Bouton « Actualiser » : recalcule le classement (surtout utile juste après
+// s'être inscrit) puis recharge. Le serveur temporise si c'est trop rapproché.
+const refreshBtn = document.getElementById("refresh");
+refreshBtn.addEventListener("click", async () => {
+  refreshBtn.disabled = true;
+  const label = refreshBtn.textContent;
+  refreshBtn.textContent = "Actualisation…";
+  try {
+    const res = await fetch("/api/refresh", { method: "POST" }).then((r) => r.json());
+    await loadBoard();
+    if (res.throttled) {
+      refreshBtn.textContent = "encore " + res.retryInSec + " s";
+    } else {
+      refreshBtn.textContent = "✓ à jour";
+      refreshBtn.classList.add("done");
+    }
+  } catch {
+    refreshBtn.textContent = "échec, réessaie";
   }
-  render();
-}).catch(() => { emptyEl.hidden = false; emptyEl.textContent = "réessaie plus tard."; });
+  setTimeout(() => {
+    refreshBtn.textContent = label;
+    refreshBtn.classList.remove("done");
+    refreshBtn.disabled = false;
+  }, 2500);
+});
