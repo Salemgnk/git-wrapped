@@ -85,9 +85,7 @@
   .feats i { color:var(--acc); font-style:normal; margin-right:6px; }
 
   /* ---- sélecteur d'intervalle + bloc connecté ---- */
-  .range { margin-top:22px; display:flex; flex-direction:column; gap:11px; }
-  .range-eye { font-family:var(--mono); font-size:clamp(11px,1.3vw,13px); font-weight:700;
-    letter-spacing:.12em; text-transform:uppercase; color:var(--acc); }
+  .range { margin-top:16px; display:flex; flex-direction:column; gap:11px; }
   .presets { display:flex; flex-wrap:wrap; gap:9px; }
   .presets button { font-family:var(--mono); font-size:13px; font-weight:700; letter-spacing:.02em;
     cursor:pointer; background:#050506; color:var(--dim); border:2px solid var(--line); padding:9px 13px;
@@ -99,9 +97,9 @@
   .custom[hidden] { display:none; }
   .custom span { color:var(--acc); font-weight:700; }
   .custom input { min-width:0; flex:1; padding:11px 13px; font-size:15px; color-scheme:dark; }
-  .me { margin-top:20px; font-family:var(--mono); font-size:13px; letter-spacing:.02em;
-    color:var(--dim); display:flex; flex-wrap:wrap; gap:8px 14px; align-items:center; }
-  .me::before { content:"●"; color:var(--acc); }
+  .me { margin-top:14px; font-family:var(--mono); font-size:12px; letter-spacing:.02em;
+    color:var(--dim); opacity:.85; display:flex; flex-wrap:wrap; gap:6px 12px; align-items:center; }
+  .me::before { content:"●"; color:var(--acc); opacity:.7; }
   .me a { color:var(--acc); text-decoration:none; font-weight:700;
     border-bottom:1.5px solid transparent; transition:border-color .12s; }
   .me a:hover { border-color:var(--acc); }
@@ -190,7 +188,6 @@
         <button type="submit" class="cta">→ voir mon wrapped</button>
       </form>
       <div class="range" id="range">
-        <div class="range-eye">// la période à analyser</div>
         <div class="presets">
           <button type="button" data-preset="year" class="on">cette année</button>
           <button type="button" data-preset="last">année passée</button>
@@ -203,12 +200,12 @@
         </div>
       </div>
       <div class="err" id="err"></div>
-      <div class="me" id="me" hidden></div>
       <div class="feats">
         <span><i>◆</i>données 100% publiques</span>
         <span><i>◆</i>aucune connexion</span>
         <span><i>◆</i>open source</span>
       </div>
+      <div class="me" id="me" hidden></div>
     </div>
 
     <div class="right">
