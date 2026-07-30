@@ -1,6 +1,23 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { fetchWrapped } from "../lib/github-client.js";
+import { fetchWrapped, bounds } from "../lib/github-client.js";
+
+test("bounds accepte une plage custom et une année", () => {
+  assert.deepEqual(bounds({ from: "2025-06-01", to: "2025-08-31" }),
+    { fromD: "2025-06-01", toD: "2025-08-31",
+      from: "2025-06-01T00:00:00Z", to: "2025-08-31T23:59:59Z" });
+  assert.equal(bounds(2024).from, "2024-01-01T00:00:00Z");
+});
+
+test("fetchWrapped expose id et bornes de période", async () => {
+  const fakeFetch = async () => ({ ok: true, json: async () => ({ data: { user: {
+    id: "NODE1", avatarUrl: "a", contributionsCollection: { commitContributionsByRepository: [] },
+    repositories: { nodes: [] } } } }) });
+  const out = await fetchWrapped("alice", { from: "2026-02-01", to: "2026-02-28" }, "tok", fakeFetch);
+  assert.equal(out.id, "NODE1");
+  assert.equal(out.from, "2026-02-01");
+  assert.equal(out.to, "2026-02-28");
+});
 
 test("fetchWrapped expose l'avatar", async () => {
   const fakeFetch = async () => ({
