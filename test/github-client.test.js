@@ -1,6 +1,27 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { fetchWrapped, bounds } from "../lib/github-client.js";
+import { fetchWrapped, bounds, fetchPrivateCommits } from "../lib/github-client.js";
+
+test("fetchPrivateCommits agrège commits + langages d'un repo privé", async () => {
+  let call = 0;
+  const fakeFetch = async () => {
+    call++;
+    if (call === 1) // Q_REPO_LANGS
+      return { ok: true, json: async () => ({ data: { repository: { languages: { edges: [
+        { size: 120, node: { name: "Rust" } } ] } } } }) };
+    // Q_HISTORY
+    return { ok: true, json: async () => ({ data: { repository: { defaultBranchRef: { target: {
+      history: { pageInfo: { hasNextPage: false, endCursor: null }, nodes: [
+        { committedDate: "2026-03-01T10:00:00Z", messageHeadline: "wip", additions: 4, deletions: 1 } ] } } } } } }) };
+  };
+  const out = await fetchPrivateCommits({ userId: "NODE1",
+    repos: [{ owner: "alice", name: "secret" }],
+    period: { from: "2026-01-01", to: "2026-12-31" }, token: "ghs_inst", fetchImpl: fakeFetch });
+  assert.equal(out.commits.length, 1);
+  assert.equal(out.commits[0].repo, "secret");
+  assert.deepEqual(out.languages, [{ ext: ".rs", count: 120 }]);
+  assert.deepEqual(out.reposByCommits, [{ name: "secret", owner: "alice", count: 1 }]);
+});
 
 test("bounds accepte une plage custom et une année", () => {
   assert.deepEqual(bounds({ from: "2025-06-01", to: "2025-08-31" }),
