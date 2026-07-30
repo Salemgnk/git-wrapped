@@ -84,6 +84,20 @@
     text-transform:uppercase; color:var(--dim); }
   .feats i { color:var(--acc); font-style:normal; margin-right:6px; }
 
+  /* ---- sélecteur d'intervalle + bloc connecté ---- */
+  .range { margin-top:14px; display:flex; flex-direction:column; gap:10px; }
+  .presets { display:flex; flex-wrap:wrap; gap:8px; }
+  .presets button { font-family:var(--mono); font-size:13px; font-weight:700; cursor:pointer;
+    background:#050506; color:var(--dim); border:2px solid var(--line); padding:8px 12px; }
+  .presets button.on { color:#0C0C0E; background:var(--acc); border-color:var(--acc); }
+  .custom { display:flex; align-items:center; gap:8px; font-family:var(--mono); color:var(--dim); }
+  .custom[hidden] { display:none; }
+  .custom input { min-width:0; flex:1; padding:10px 12px; font-size:15px; }
+  .me { margin-top:18px; font-family:var(--mono); font-size:13px; color:var(--dim);
+    display:flex; flex-wrap:wrap; gap:10px 16px; align-items:center; }
+  .me a { color:var(--acc); text-decoration:none; } .me a:hover { text-decoration:underline; }
+  .me b { color:var(--ink); }
+
   /* ---- aperçu carte (colonne droite) ---- */
   .right { display:flex; justify-content:center; }
   .mock { width:min(340px,80%); aspect-ratio:9/17.4; background:var(--panel);
@@ -166,7 +180,20 @@
           pattern="[A-Za-z0-9-]{1,39}" required>
         <button type="submit" class="cta">→ voir mon wrapped</button>
       </form>
+      <div class="range" id="range">
+        <div class="presets">
+          <button type="button" data-preset="year" class="on">cette année</button>
+          <button type="button" data-preset="last">année passée</button>
+          <button type="button" data-preset="365">12 derniers mois</button>
+          <button type="button" data-preset="all">tout</button>
+          <button type="button" data-preset="custom">plage perso…</button>
+        </div>
+        <div class="custom" id="custom" hidden>
+          <input type="date" id="from"> <span>→</span> <input type="date" id="to">
+        </div>
+      </div>
       <div class="err" id="err"></div>
+      <div class="me" id="me" hidden></div>
       <div class="feats">
         <span><i>◆</i>données 100% publiques</span>
         <span><i>◆</i>aucune connexion</span>
@@ -219,34 +246,83 @@ for (let i = 0; i < 22; i++) { const b = document.createElement("i");
 // retour à l'accueil depuis le wrapped : le moteur se démonte lui-même (via destroy),
 // on réaffiche juste la landing.
 function backHome() { app.innerHTML = ""; landing.style.display = ""; window.scrollTo(0, 0); }
-f.addEventListener("submit", async e => {
-  e.preventDefault();
-  const user = document.getElementById("u").value.trim();
+// ---- sélection d'intervalle ----
+const rangeEl = document.getElementById("range"), customEl = document.getElementById("custom"),
+  fromEl = document.getElementById("from"), toEl = document.getElementById("to");
+let preset = "year";
+const iso = d => d.toISOString().slice(0, 10);
+function presetRange(p) {
+  const now = new Date(), y = now.getUTCFullYear();
+  if (p === "year") return { from: y + "-01-01", to: iso(now) };
+  if (p === "last") return { from: (y - 1) + "-01-01", to: (y - 1) + "-12-31" };
+  if (p === "365") { const d = new Date(now); d.setUTCFullYear(y - 1); return { from: iso(d), to: iso(now) }; }
+  if (p === "all") return { from: "2008-01-01", to: iso(now) };
+  return null; // custom
+}
+function currentRange() {
+  if (preset === "custom") {
+    if (/^\d{4}-\d{2}-\d{2}$/.test(fromEl.value) && /^\d{4}-\d{2}-\d{2}$/.test(toEl.value)
+        && fromEl.value <= toEl.value) return { from: fromEl.value, to: toEl.value };
+    return null;
+  }
+  return presetRange(preset);
+}
+rangeEl.querySelectorAll("[data-preset]").forEach(b => b.addEventListener("click", () => {
+  preset = b.dataset.preset;
+  rangeEl.querySelectorAll("[data-preset]").forEach(x => x.classList.toggle("on", x === b));
+  customEl.hidden = preset !== "custom";
+}));
+
+// ---- état de session : propose le wrapped perso (repos privés) ----
+let ME = { login: null };
+const meEl = document.getElementById("me");
+fetch("/api/me").then(r => r.json()).then(m => {
+  ME = m;
+  if (!m.login) {
+    meEl.hidden = false;
+    meEl.innerHTML = '<a href="/api/auth/start">→ connecte-toi</a> pour un wrapped perso (repos privés inclus)';
+    return;
+  }
+  meEl.hidden = false;
+  meEl.innerHTML = "connecté <b>@" + m.login + "</b> · "
+    + '<a href="#" id="mine">→ mon wrapped perso' + (m.private_connected ? " (repos privés inclus)" : "") + "</a>"
+    + (m.private_connected || !m.install_url ? "" : ' · <a href="' + m.install_url + '">connecter mes repos privés</a>');
+  const mine = document.getElementById("mine");
+  if (mine) mine.addEventListener("click", e => { e.preventDefault(); runWrapped(m.login, true); });
+});
+
+// ---- lancement du wrapped (public ou perso) ----
+async function runWrapped(user, personal) {
   errEl.textContent = "";
+  const range = currentRange();
+  if (!range) { errEl.textContent = "choisis une plage de dates valide."; return; }
   document.getElementById("luser").textContent = "@" + user;
   loading.classList.add("on");
   const t0 = performance.now();
   const settle = () => new Promise(r => setTimeout(r, Math.max(0, 900 - (performance.now() - t0))));
+  const qs = "from=" + range.from + "&to=" + range.to;
+  const url = personal ? "/api/me/wrapped?" + qs : "/api/wrapped?user=" + encodeURIComponent(user) + "&" + qs;
   try {
-    const r = await fetch("/api/wrapped?user=" + encodeURIComponent(user));
+    const r = await fetch(url);
     await settle();
     if (r.status === 404) { loading.classList.remove("on"); errEl.textContent = "pseudo introuvable."; return; }
+    if (r.status === 401) { loading.classList.remove("on"); errEl.textContent = "connecte-toi d'abord."; return; }
     if (!r.ok) { loading.classList.remove("on"); errEl.textContent = "réessaie plus tard."; return; }
     const stats = await r.json();
     loading.classList.remove("on");
-    if (stats.empty) {
-      errEl.textContent = "@" + user + " n'a aucun commit public en " + stats.year + ".";
-      return;
-    }
+    if (stats.empty) { errEl.textContent = "@" + user + " n'a aucun commit sur cette période."; return; }
     landing.style.display = "none";
     renderWrapped(app, stats, backHome);
   } catch (_) { await settle(); loading.classList.remove("on"); errEl.textContent = "réessaie plus tard."; }
-});
-// deep-link : /?u=<login> pré-remplit et lance le wrapped (depuis le classement)
+}
+
+f.addEventListener("submit", e => { e.preventDefault(); runWrapped(document.getElementById("u").value.trim(), false); });
+
+// deep-link : /?u=<login> pré-remplit et lance le wrapped public
 const uParam = new URLSearchParams(location.search).get("u");
 if (uParam && /^[A-Za-z0-9-]{1,39}$/.test(uParam)) {
   document.getElementById("u").value = uParam;
-  f.requestSubmit();
+  runWrapped(uParam, false);
 }
 // PWA : enregistre le service worker (offline + installable)
 if ("serviceWorker" in navigator)
