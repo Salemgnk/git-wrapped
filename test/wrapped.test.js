@@ -66,3 +66,26 @@ test("200 with a valid contract on the happy path", async () => {
   assert.ok(r.body.contributions.weeks.length > 0);
   assert.equal(r.headers["Cache-Control"], "public, max-age=600");
 });
+
+test("wrapped: from/to invalides -> repli sur l'année", async () => {
+  let seenPeriod = null;
+  const fakeFetchWrapped = async (user, period) => { seenPeriod = period;
+    return { user, from: "2026-01-01", to: "2026-12-31", id: "1", avatar: "a",
+      reposByCommits: [], commits: [], languages: [] }; };
+  const r = res();
+  await handler({ query: { user: "alice", from: "bad", to: "2026-12-31" } }, r,
+    { token: "tok", fetchWrapped: fakeFetchWrapped });
+  assert.equal(typeof seenPeriod, "number"); // année, pas { from, to }
+  assert.equal(r.code, 200);
+});
+
+test("wrapped: from/to valides -> période custom", async () => {
+  let seenPeriod = null;
+  const fakeFetchWrapped = async (user, period) => { seenPeriod = period;
+    return { user, from: "2026-02-01", to: "2026-02-28", id: "1", avatar: "a",
+      reposByCommits: [], commits: [], languages: [] }; };
+  const r = res();
+  await handler({ query: { user: "alice", from: "2026-02-01", to: "2026-02-28" } }, r,
+    { token: "tok", fetchWrapped: fakeFetchWrapped });
+  assert.deepEqual(seenPeriod, { from: "2026-02-01", to: "2026-02-28" });
+});
