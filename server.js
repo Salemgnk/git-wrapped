@@ -30,6 +30,9 @@ const API = {
   "/api/auth/start": () => import("./api/auth/start.js"),
   "/api/auth/callback": () => import("./api/auth/callback.js"),
   "/api/leave": () => import("./api/leave.js"),
+  "/api/me": () => import("./api/me.js"),
+  "/api/me/wrapped": () => import("./api/me/wrapped.js"),
+  "/api/app/installed": () => import("./api/app/installed.js"),
   "/api/cron/refresh": () => import("./api/cron/refresh.js"),
 };
 
