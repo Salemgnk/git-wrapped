@@ -85,17 +85,26 @@
   .feats i { color:var(--acc); font-style:normal; margin-right:6px; }
 
   /* ---- sélecteur d'intervalle + bloc connecté ---- */
-  .range { margin-top:14px; display:flex; flex-direction:column; gap:10px; }
-  .presets { display:flex; flex-wrap:wrap; gap:8px; }
-  .presets button { font-family:var(--mono); font-size:13px; font-weight:700; cursor:pointer;
-    background:#050506; color:var(--dim); border:2px solid var(--line); padding:8px 12px; }
+  .range { margin-top:22px; display:flex; flex-direction:column; gap:11px; }
+  .range-eye { font-family:var(--mono); font-size:clamp(11px,1.3vw,13px); font-weight:700;
+    letter-spacing:.12em; text-transform:uppercase; color:var(--acc); }
+  .presets { display:flex; flex-wrap:wrap; gap:9px; }
+  .presets button { font-family:var(--mono); font-size:13px; font-weight:700; letter-spacing:.02em;
+    cursor:pointer; background:#050506; color:var(--dim); border:2px solid var(--line); padding:9px 13px;
+    transition:border-color .12s, color .12s, background .12s, transform .1s; }
+  .presets button:hover { border-color:var(--acc); color:var(--ink); }
   .presets button.on { color:#0C0C0E; background:var(--acc); border-color:var(--acc); }
-  .custom { display:flex; align-items:center; gap:8px; font-family:var(--mono); color:var(--dim); }
+  .presets button:active { transform:translate(1px,1px); }
+  .custom { display:flex; align-items:center; gap:10px; font-family:var(--mono); color:var(--dim); }
   .custom[hidden] { display:none; }
-  .custom input { min-width:0; flex:1; padding:10px 12px; font-size:15px; }
-  .me { margin-top:18px; font-family:var(--mono); font-size:13px; color:var(--dim);
-    display:flex; flex-wrap:wrap; gap:10px 16px; align-items:center; }
-  .me a { color:var(--acc); text-decoration:none; } .me a:hover { text-decoration:underline; }
+  .custom span { color:var(--acc); font-weight:700; }
+  .custom input { min-width:0; flex:1; padding:11px 13px; font-size:15px; color-scheme:dark; }
+  .me { margin-top:20px; font-family:var(--mono); font-size:13px; letter-spacing:.02em;
+    color:var(--dim); display:flex; flex-wrap:wrap; gap:8px 14px; align-items:center; }
+  .me::before { content:"●"; color:var(--acc); }
+  .me a { color:var(--acc); text-decoration:none; font-weight:700;
+    border-bottom:1.5px solid transparent; transition:border-color .12s; }
+  .me a:hover { border-color:var(--acc); }
   .me b { color:var(--ink); }
 
   /* ---- aperçu carte (colonne droite) ---- */
@@ -181,6 +190,7 @@
         <button type="submit" class="cta">→ voir mon wrapped</button>
       </form>
       <div class="range" id="range">
+        <div class="range-eye">// la période à analyser</div>
         <div class="presets">
           <button type="button" data-preset="year" class="on">cette année</button>
           <button type="button" data-preset="last">année passée</button>
