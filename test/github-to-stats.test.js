@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { githubToStats } from "../lib/github-to-stats.js";
+import { githubToStats, periodBounds, mergeWrappedInputs } from "../lib/github-to-stats.js";
 
 // c(date, hour, msg, add, del, repo) -> objet d'historique de commit
 function c(date, hour = 12, message = "msg", additions = 0, deletions = 0, repo = "a") {
@@ -55,4 +55,40 @@ test("top repos derived from the commits (single source of truth)", () => {
   assert.equal(s.total_commits, 4);              // cohérent : total == somme des repos
   const langs = Object.fromEntries(s.projects.languages.map(l => [l.ext, l.count]));
   assert.equal(langs[".map"], 999);
+});
+
+test("periodBounds: from/to prioritaires sur year", () => {
+  assert.deepEqual(periodBounds({ from: "2025-06-01", to: "2025-08-31", year: 2026 }),
+    { from: "2025-06-01", to: "2025-08-31" });
+});
+
+test("periodBounds: derive depuis year", () => {
+  assert.deepEqual(periodBounds({ year: 2024 }), { from: "2024-01-01", to: "2024-12-31" });
+});
+
+test("stats sur une période custom < 1 an ne compte que la fenêtre", () => {
+  const commits = [c("2026-02-10"), c("2026-02-11"), c("2026-09-01")];
+  const s = githubToStats({ user: "x", from: "2026-01-01", to: "2026-03-31", commits, languages: [] });
+  // Le calendrier ne couvre que jan->mars : le commit de septembre n'a pas de case.
+  const dates = s.contributions.weeks.flat().filter(Boolean).map(d => d.date);
+  assert.ok(dates.includes("2026-02-10"));
+  assert.ok(!dates.some(d => d.startsWith("2026-09")));
+  assert.equal(s.period.from, "2026-01-01");
+  assert.equal(s.period.to, "2026-03-31");
+});
+
+test("période à cheval sur deux années : year = année de 'to'", () => {
+  const s = githubToStats({ user: "x", from: "2025-11-01", to: "2026-01-31",
+    commits: [c("2025-12-25"), c("2026-01-05")], languages: [] });
+  assert.equal(s.year, 2026);
+  assert.equal(s.total_commits, 2);
+});
+
+test("mergeWrappedInputs concatène commits et agrège langages", () => {
+  const a = { commits: [c("2026-01-01")], languages: [{ ext: ".js", count: 10 }, { ext: ".ts", count: 5 }] };
+  const b = { commits: [c("2026-01-02")], languages: [{ ext: ".js", count: 3 }] };
+  const m = mergeWrappedInputs(a, b);
+  assert.equal(m.commits.length, 2);
+  const byExt = Object.fromEntries(m.languages.map(l => [l.ext, l.count]));
+  assert.deepEqual(byExt, { ".js": 13, ".ts": 5 });
 });
