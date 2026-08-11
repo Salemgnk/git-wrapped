@@ -182,9 +182,11 @@ body { background: #050506; color: var(--ink); font-family: var(--sans);
   letter-spacing: -.03em; font-size: min(12cqh, 17cqw); font-variant-numeric: tabular-nums;
   white-space: nowrap; }
 .diff.add { color: #56D364; } .diff.del { color: #F0616D; }
-.cal { display: flex; gap: .32cqw; margin: 1cqh 0; }
-.cal .wk { display: flex; flex-direction: column; gap: .32cqw; }
-.cal .cell { width: 1.34cqw; aspect-ratio: 1; border-radius: 1px;
+/* --cgap / --cell sont posés par calendar() : les cases rétrécissent sur les
+   périodes de plus d'un an au lieu de déborder de la carte. */
+.cal { display: flex; gap: var(--cgap, .32cqw); margin: 1cqh 0; }
+.cal .wk { display: flex; flex-direction: column; gap: var(--cgap, .32cqw); }
+.cal .cell { width: var(--cell, 1.34cqw); aspect-ratio: 1; border-radius: 1px;
   background: rgba(244,243,238,.06); }
 .chip { align-self: flex-start; font-family: var(--mono); font-size: 1.95cqh;
   font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--ink);

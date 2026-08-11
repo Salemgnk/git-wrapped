@@ -96,7 +96,8 @@ function recapSVG(fontCSS) {
   let s = '<rect width="' + W + '" height="' + H + '" fill="' + bg + '"/>';
   // calendrier (cellules orange)
   const C = S.contributions || { weeks: [], max: 0 }, max = C.max || 1;
-  const LV = ["#211d18", "#5a3016", "#8f4a17", "#d9741f", "#FF7A3C"], cs = 13, gp = 2, gy = 150;
+  const LV = ["#211d18", "#5a3016", "#8f4a17", "#d9741f", "#FF7A3C"], gy = 150;
+  const pitch = calPitch(C.weeks.length, W - 2 * PX, 15), gp = pitch * 0.14, cs = pitch - gp;
   C.weeks.forEach((w, wi) => w.forEach((c, di) => { if (!c) return;
     const lv = c.count === 0 ? 0 : Math.min(4, Math.ceil(c.count / max * 4));
     s += '<rect x="' + (PX + wi * (cs + gp)) + '" y="' + (gy + di * (cs + gp)) + '" width="' + cs + '" height="' + cs + '" rx="1" fill="' + LV[lv] + '"/>'; }));
@@ -220,7 +221,8 @@ function iChip(t) { const w = measureW(t.toUpperCase(), 36, true, 700) + 56;
     '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="56" fill="none" stroke="' + HLINE + '" stroke-width="2"/>'
     + svgT(x + 28, y + 40, INK, 36, "700", t.toUpperCase(), true, 4) }; }
 function iCal(acc) {
-  const C = S.contributions || { weeks: [], max: 0 }, max = C.max || 1, cs = 12, gp = 3;
+  const C = S.contributions || { weeks: [], max: 0 }, max = C.max || 1;
+  const pitch = calPitch(C.weeks.length, 888, 15), gp = pitch * 0.2, cs = pitch - gp;
   return { h: 7 * (cs + gp) + 20, draw: (x, y) => { let s = "";
     C.weeks.forEach((w, wi) => w.forEach((c, di) => { if (!c) return;
       const bx = x + wi * (cs + gp), by = y + di * (cs + gp);
@@ -460,11 +462,19 @@ function rhythmJoke(h) {
   if (h <= 14) return "Tu codes entre deux bouchées. Le pain a des miettes de bug.";
   return "Productif l'après-midi. Un vrai adulte, presque.";
 }
+// Pas horizontal d'une case, pour que N semaines tiennent dans la largeur dispo.
+// Au-delà d'un an (~53 colonnes) les cases rétrécissent au lieu de déborder.
+function calPitch(weeks, avail, maxPitch) {
+  return Math.min(maxPitch, avail / Math.max(1, weeks));
+}
 function calendar() {
   const wrap = el("div", "cal");
   const C = S.contributions || { weeks: [], max: 0 };
   const max = C.max || 1;
   const PCT = [0, 26, 50, 74, 100];
+  const pitch = calPitch(C.weeks.length, 88, 1.66);   // 88cqw = largeur de carte moins marges
+  wrap.style.setProperty("--cgap", (pitch * 0.19).toFixed(3) + "cqw");
+  wrap.style.setProperty("--cell", (pitch * 0.81).toFixed(3) + "cqw");
   C.weeks.forEach(week => {
     const col = el("div", "wk");
     week.forEach(cell => {
