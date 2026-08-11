@@ -102,8 +102,10 @@ function recapSVG(fontCSS) {
     s += '<rect x="' + (PX + wi * (cs + gp)) + '" y="' + (gy + di * (cs + gp)) + '" width="' + cs + '" height="' + cs + '" rx="1" fill="' + LV[lv] + '"/>'; }));
   s += svgT(PX, 360, acc, 34, "800", "// LE RECAP", true, 6);
   // ticket : ombre dure + panneau bordé
+  const sr = splitRecap();
   const rows = [
     ["commits", fmt(S.total_commits)],
+    ...(sr ? [["pub / priv", sr]] : []),
     ["lignes", "+" + kfmt(S.volume.added) + " / -" + kfmt(S.volume.deleted)],
     ["serie max", S.volume.longest_streak + " j"],
     ["top projet", S.projects.top_repos[0].name],
@@ -305,6 +307,8 @@ function cardSVG(i, fontCSS) {
     items = [iEyebrow("// cette année, tu as poussé", acc), iBlockNum(fmt(S.total_commits), acc, 236),
       iUnit("commits", acc), iJoke(commitJoke(S.total_commits), acc),
       iNote("sur " + fmt(S.volume.active_days) + " jours actifs, dans " + fmt(S.projects.repo_count) + " dépôts.")];
+    const sn = splitNote();
+    if (sn) items.push(iNote(sn));
   } else if (i === 2) {
     items = [iEyebrow("// ton rythme", acc),
       iTitle("Tu codes surtout à " + S.rhythm.peak_hour + "h, le " + DAYS[S.rhythm.peak_weekday] + "."),
@@ -404,7 +408,22 @@ function slideCommits() {
   c.appendChild(el("div", "note",
     "sur " + fmt(S.volume.active_days) + " jours actifs, dans " +
     fmt(S.projects.repo_count) + " dépôts."));
+  const sn = splitNote();
+  if (sn) c.appendChild(el("div", "note", sn));
   return c;
+}
+// Répartition public / privé. Ne s'affiche que sur le wrapped perso : un wrapped
+// public n'embarque aucun commit privé, donc rien à révéler.
+function splitNote() {
+  const sp = S.commits_split;
+  if (!sp || !sp.private) return null;
+  return "dont " + fmt(sp.public) + " sur des repos publics et "
+    + fmt(sp.private) + " en privé.";
+}
+// Ligne du ticket récap : libellé et valeur courts, le ticket n'a qu'une ligne.
+function splitRecap() {
+  const sp = S.commits_split;
+  return sp && sp.private ? fmt(sp.public) + " / " + fmt(sp.private) : null;
 }
 function commitJoke(n) {
   if (n < 50) return "T'as surtout poussé des excuses cette année.";
@@ -701,12 +720,14 @@ function kfmt(n) { return n >= 1000 ? Math.round(n / 1000) + "k" : String(n); }
 function slideRecap() {
   const c = card(9);
   c.appendChild(el("div", "eyebrow", "// le récap"));
-  const r = el("div", "receipt");
+  const sr = splitRecap();
+  const r = el("div", sr ? "receipt dense" : "receipt");
   const h = el("div", "rh");
   h.appendChild(el("span", null, S.user ? "@" + S.user : "git wrapped"));
   h.appendChild(el("span", null, String(S.year)));
   r.appendChild(h);
   [["commits", fmt(S.total_commits)],
+   ...(sr ? [["pub / priv", sr]] : []),
    ["lignes", "+" + kfmt(S.volume.added) + " / −" + kfmt(S.volume.deleted)],
    ["série max", S.volume.longest_streak + " j"],
    ["top projet", S.projects.top_repos[0].name],

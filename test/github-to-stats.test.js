@@ -92,3 +92,17 @@ test("mergeWrappedInputs concatène commits et agrège langages", () => {
   const byExt = Object.fromEntries(m.languages.map(l => [l.ext, l.count]));
   assert.deepEqual(byExt, { ".js": 13, ".ts": 5 });
 });
+
+test("commits_split sépare publics et privés (défaut = public)", () => {
+  const priv = (...a) => ({ ...c(...a), private: true });
+  const s = githubToStats({ user: "x", from: "2026-01-01", to: "2026-12-31",
+    commits: [c("2026-01-01"), c("2026-01-02"), priv("2026-01-03"), priv("2026-01-04"), priv("2026-01-05")],
+    languages: [] });
+  assert.equal(s.total_commits, 5);
+  assert.deepEqual(s.commits_split, { public: 2, private: 3 });
+});
+
+test("commits_split existe même sans commit", () => {
+  const s = githubToStats({ user: "x", year: 2026, commits: [], languages: [] });
+  assert.deepEqual(s.commits_split, { public: 0, private: 0 });
+});

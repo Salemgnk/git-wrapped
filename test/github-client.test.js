@@ -73,3 +73,36 @@ test("fetchWrapped exclut les repos privés", async () => {
   assert.deepEqual(names, ["public-repo"]);
   assert.ok(!names.includes("secret"));
 });
+
+test("les commits publics ne sont pas marqués privés", async () => {
+  const fakeFetch = async (url, opts) => {
+    const body = JSON.parse(opts.body);
+    if (body.query.includes("commitContributionsByRepository"))
+      return { ok: true, json: async () => ({ data: { user: { id: "N1", avatarUrl: "a",
+        contributionsCollection: { commitContributionsByRepository: [
+          { repository: { name: "open", owner: { login: "alice" }, isPrivate: false },
+            contributions: { totalCount: 1 } } ] },
+        repositories: { nodes: [] } } } }) };
+    return { ok: true, json: async () => ({ data: { repository: { defaultBranchRef: { target: {
+      history: { pageInfo: { hasNextPage: false, endCursor: null }, nodes: [
+        { committedDate: "2026-03-01T10:00:00Z", messageHeadline: "feat", additions: 2, deletions: 0 } ] } } } } } }) };
+  };
+  const out = await fetchWrapped("alice", 2026, "tok", fakeFetch);
+  assert.equal(out.commits.length, 1);
+  assert.equal(out.commits[0].private, false);
+});
+
+test("fetchPrivateCommits marque ses commits comme privés", async () => {
+  let call = 0;
+  const fakeFetch = async () => {
+    call++;
+    if (call === 1)
+      return { ok: true, json: async () => ({ data: { repository: { languages: { edges: [] } } } }) };
+    return { ok: true, json: async () => ({ data: { repository: { defaultBranchRef: { target: {
+      history: { pageInfo: { hasNextPage: false, endCursor: null }, nodes: [
+        { committedDate: "2026-03-01T10:00:00Z", messageHeadline: "wip", additions: 1, deletions: 0 } ] } } } } } }) };
+  };
+  const out = await fetchPrivateCommits({ userId: "N1", repos: [{ owner: "alice", name: "secret" }],
+    period: 2026, token: "ghs_inst", fetchImpl: fakeFetch });
+  assert.equal(out.commits[0].private, true);
+});

@@ -60,4 +60,5 @@ test("me/wrapped: connecté avec installation -> fusionne le privé", async () =
   assert.equal(res.code, 200);
   assert.equal(res.body.private_included, true);
   assert.equal(res.body.total_commits, 1); // le commit privé est bien compté
+  assert.deepEqual(res.body.commits_split, { public: 0, private: 1 });
 });

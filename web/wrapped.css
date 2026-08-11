@@ -165,6 +165,9 @@ body { background: #050506; color: var(--ink); font-family: var(--sans);
   font-size: .82em; align-self: center; }
 .receipt .row .v { font-weight: 700; text-align: right; overflow: hidden;
   text-overflow: ellipsis; white-space: nowrap; }
+/* ticket à 7 lignes (répartition public/privé) : on resserre pour rester dans la carte */
+.receipt.dense { padding: 2cqh 5cqw; }
+.receipt.dense .row { padding: .42cqh 0; font-size: 2.2cqh; }
 .rank { display: flex; flex-direction: column; gap: 1.15cqh; font-family: var(--mono);
   font-size: 2.35cqh; font-weight: 700; }
 .rank .r { display: flex; align-items: baseline; gap: 2.6cqw; }
