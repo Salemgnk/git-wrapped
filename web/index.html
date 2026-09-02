@@ -281,6 +281,12 @@ rangeEl.querySelectorAll("[data-preset]").forEach(b => b.addEventListener("click
   customEl.hidden = preset !== "custom";
 }));
 
+// ---- retour d'installation refusée (api/app/installed) ----
+const APP_ERR = { org: "les repos privés d'organisation ne sont pas encore gérés \u2014 installe l'app sur ton compte perso.",
+  foreign: "cette installation n'appartient pas \u00e0 ton compte." };
+const appErr = APP_ERR[new URLSearchParams(location.search).get("app_error")];
+if (appErr) errEl.textContent = appErr;
+
 // ---- état de session : propose le wrapped perso (repos privés) ----
 let ME = { login: null };
 const meEl = document.getElementById("me");
